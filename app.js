@@ -27,7 +27,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 //讓 express 能夠認到 bower_components 底下的內容
 app.use('/bower_components',  express.static(__dirname + '/bower_components'));
 
-app.use('/', index);
+//middleware
+router.use(function(req, res, next){
+  
+  next();
+});
+
+router.get('/', index);
+
+//app.use('/', index);
+app.use('/', router);
 app.use('/users', users);
 app.use('/api', api);
 
