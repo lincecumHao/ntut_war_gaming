@@ -1,0 +1,9 @@
+{
+  "name": "react-demo",
+  "version": "0.0.1",
+  "dependencies": {
+    "react": "~0.14.5",
+    "jquery": "~2.1.4",
+    "bootstrap": "~3.3.6"
+  }
+}
