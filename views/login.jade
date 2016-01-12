@@ -1,0 +1,13 @@
+extends layout
+
+block css
+  link(rel='stylesheet', href='/stylesheets/Login/login.css')
+
+block content
+  .container
+    .card.card-container
+      img#logo-img.logo-img(src='/images/login.png')
+      #login
+
+block script
+  script(src='/javascripts/build/Login.js')

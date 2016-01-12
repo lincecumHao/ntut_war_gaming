@@ -1,0 +1,55 @@
+var React = require('react');
+var request = require('request');
+var $ = require("jquery");
+
+var LoginForm = React.createClass({
+
+	getInitialState: function() {
+		return {
+			failedMsg: "",
+			username: "",
+			password: "" 
+		};
+	},
+
+	handelSubmit: function(e){
+		e.preventDefault();
+		console.log(this.state);
+		$.post("./login", this.state, function(data){
+			if(data.error){
+				this.setState({
+					failedMsg: "Login Failed..." 
+				});
+			}else{
+				$(".container").remove();
+				$("body").html(data);
+			}
+		}.bind(this));
+	},
+
+	handelUserNameChang: function(e){
+		this.setState({
+			username: e.target.value 
+		});
+	},
+
+	handelPasswordChang: function(e){
+		this.setState({
+			password: e.target.value 
+		});
+	},
+
+	render: function() {
+		return (
+			<form className="form-signin" onSubmit={this.handelSubmit} >
+				<input className="form-control" type="text" value={this.state.username} placeholder="Account" onChange={this.handelUserNameChang} required autofocus/>
+				<input className="form-control" type="password" value={this.state.password} placeholder="Password" onChange={this.handelPasswordChang} required/>
+				<div><p>{this.state.failedMsg}</p></div>
+				<button className="btn btn-lg btn-primary btn-block btn-signin" type="submit" >Login</button>
+			</form>
+		);
+	}
+
+});
+
+module.exports = LoginForm;	

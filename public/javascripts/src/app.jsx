@@ -1,11 +1,10 @@
-var $ = require('jquery');
 var bootstrap = require('bootstrap');
 var React = require('react');
 var ReactDOM = require('react-dom');
-var Job = require('./Jobs.jsx');
+var Jobs = require('./Jobs.jsx');
 
 
 ReactDOM.render(
-	<Job />,
+	<Jobs />,
 	document.getElementById('job-post')
 	);

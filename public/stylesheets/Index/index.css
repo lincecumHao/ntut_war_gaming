@@ -1,0 +1,7 @@
+.full-height {
+    height: 100vh;
+}
+
+div.col-md-2{
+	background: rgba(0, 0, 0, 0.3);
+}

@@ -12,8 +12,16 @@ gulp.task('js', function(){
         .pipe(gulp.dest('public/javascripts/build/'));
 });
 
+gulp.task('login', function(){
+    browserify('public/javascripts/src/Login.jsx')
+        .transform(reactify)
+        .bundle()
+        .pipe(source('Login.js'))
+        .pipe(gulp.dest('public/javascripts/build/'));
+});
+
 gulp.task('watch', function() {
-    gulp.watch("public/javascripts/src/**/*.jsx", ["js"])
+    gulp.watch("public/javascripts/src/**/*.jsx", ["js", "login"])
 })
 
-gulp.task('default', ['js', 'watch']);
+gulp.task('default', ['watch']);
