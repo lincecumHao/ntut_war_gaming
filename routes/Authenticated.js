@@ -9,6 +9,7 @@ router.use(function(req, res, next) {
         res.render('login');
     } else {
     	console.log("Login.");
+    	//res.redirect("/index");
         next();
     }
 });

@@ -87611,15 +87611,13 @@ var LoginForm = React.createClass({displayName: "LoginForm",
 
 	handelSubmit: function(e){
 		e.preventDefault();
-		console.log(this.state);
 		$.post("./login", this.state, function(data){
-			if(data.error){
+			if(data.status == 0){
 				this.setState({
 					failedMsg: "Login Failed..." 
 				});
 			}else{
-				$(".container").remove();
-				$("body").html(data);
+				window.location = "localhost:3000/index";
 			}
 		}.bind(this));
 	},

@@ -13,11 +13,15 @@ router.post('/login', function(req, res) {
         var user = users[0];
         if (user == undefined || post.password !== user.password) {
             res.json({
-                error: "login failed."
+                status: 0,
+                error: "Login Failed"
             });
         } else {
             sess.user = user;
-            res.render("index");
+            res.json({
+                status: 1,
+                error: ""
+            });
         }
     });
 });
