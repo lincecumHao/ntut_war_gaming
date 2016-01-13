@@ -28,8 +28,16 @@ gulp.task('index', function(){
         .pipe(gulp.dest('public/javascripts/build/Index/'));
 });
 
+gulp.task('chatroom', function(){
+    browserify('public/javascripts/src/ChatRoom/ChatRoom.jsx')
+        .transform(reactify)
+        .bundle()
+        .pipe(source('ChatRoom.js'))
+        .pipe(gulp.dest('public/javascripts/build/ChatRoom/'));
+});
+
 gulp.task('watch', function() {
-    gulp.watch("public/javascripts/src/**/*.jsx", ["js", "login", "index"])
+    gulp.watch("public/javascripts/src/**/*.jsx", ["js", "login", "index", "chatroom"])
 })
 
 gulp.task('default', ['watch']);

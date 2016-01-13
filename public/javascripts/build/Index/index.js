@@ -9212,7 +9212,7 @@ return jQuery;
 
 },{}],2:[function(require,module,exports){
 var $ = require("jquery");
-
+var socket = io();
 var _map;
 $(document).ready(function() {
     _map = new google.maps.Map(document.getElementById('map'), {

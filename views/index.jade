@@ -4,8 +4,12 @@ block content
   link(rel='stylesheet', href='/stylesheets/Index/index.css')
   .container-fluid
     .row.full-height 
-      .col-md-2.full-height 1
+      #resource.col-md-2.full-height 1
       #map.col-md-8.full-height 2
-      .col-md-2.full-height 1
+      #chat-room.col-md-2.full-height
+        
+
   script(src='https://maps.googleapis.com/maps/api/js?' defer)
+  script(src="/bower_components/socket.io-client/socket.io.js")
   script(src="/javascripts/build/Index/index.js")
+  script(src="/javascripts/build/ChatRoom/ChatRoom.js")

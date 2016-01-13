@@ -33,8 +33,9 @@ router.get('/login', function(req, res, next) {
 });
 
 router.get('/logout', function(req, res) {
-    req.session.destroy;
-    res.redirect('/login');
+    var sess = req.session;
+    delete sess.user
+    res.redirect('/');
 });
 
 module.exports = router;

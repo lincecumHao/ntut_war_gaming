@@ -12,7 +12,9 @@ var autenticated = require('./routes/Authenticated');
 var index = require('./routes/index');
 var jobRoutes = require("./routes/jobRoutes");
 
+//test socket.io
 var app = express();
+var http = require('http').Server(app);
 
 
 // view engine setup

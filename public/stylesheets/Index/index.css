@@ -1,7 +1,15 @@
 .full-height {
-    height: 100vh;
+    height: 99vh;
 }
 
-div.col-md-2{
-	background: rgba(0, 0, 0, 0.3);
+div.col-md-2 {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+#sendMsgFormHolder {
+    /* 設定footer絕對位置在底部 */
+    /*position: absolute;*/
+    position: absolute;
+    bottom: 0;
+    /* 展開footer寬度 */
 }

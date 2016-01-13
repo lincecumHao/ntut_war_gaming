@@ -20,7 +20,8 @@ var LoginForm = React.createClass({
 					failedMsg: "Login Failed..." 
 				});
 			}else{
-				window.location = "localhost:3000/index";
+				window.location = "localhost:3000/";
+        		location.reload();
 			}
 		}.bind(this));
 	},
