@@ -4,17 +4,28 @@ var ChatForm = React.createClass({
 
 	getInitialState: function() {
 		return {
-			text: "" 
+			text: "",
+			chatTo: undefined
 		};
+	},
+
+	componentWillMount: function() {
+		if(this.props.userChatTo){
+			this.setState({
+				chatTo: this.props.userChatTo
+			});
+		}
 	},
 
 	handelSubmit: function(e){
 		e.preventDefault();
 		var message = {
-          text : this.state.text
+			from : this.props.from,
+          	text : this.state.text,
+          	chatTo : this.props.chatTo
       	}
       	this.props.onMessageSubmit(message);
-		this.setState({ text: '' });
+		this.setState({ text: '', chatTo: undefined });
 	},
 
 	handelMessage: function(e){
@@ -28,9 +39,9 @@ var ChatForm = React.createClass({
 			<div id="sendMsgFormHolder">
 				<form className="form-inline" role='form' onSubmit={this.handelSubmit} >
 					<div className="form-group">
-						<input className="form-control" type="text" placeholder="Message" onChange={this.handelMessage} value={this.state.text}/>
+						<input className="form-control" style={{width:"70%"}} type="text" placeholder={this.props.chatTo ? "對" + this.props.chatTo + "說" : "訊息" } onChange={this.handelMessage} value={this.state.text}/>
+						<button className="btn btn-primary" style={{width:"30%"}} type="submit" >Send</button>
 					</div>
-					<button className="btn btn-primary" type="submit" >Send</button>
 				</form>
 			</div>
 		);

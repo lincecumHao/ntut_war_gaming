@@ -7,8 +7,14 @@ var user = new Schema({
     password: String,
     subordinate: String
 }, { collection: 'user' });
+
+var department = new Schema({
+    name: String,
+    address: String
+}, { collection: 'department' });
  
 mongoose.model( 'user', user );
+mongoose.model( 'department', department );
 mongoose.connect( 'mongodb://lincecum:O4dv6q9AJSHpFEH1dzjG@ds045684.mongolab.com:45684/war_game', function(err) {
     if (err) throw err;
 } );

@@ -13,3 +13,9 @@ div.col-md-2 {
     bottom: 0;
     /* 展開footer寬度 */
 }
+
+.messages {
+	height: 80vh;
+	overflow-y: scroll; 
+	background: beige;
+}

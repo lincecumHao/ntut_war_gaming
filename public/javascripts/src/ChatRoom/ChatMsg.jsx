@@ -3,9 +3,10 @@ var React = require('react');
 var ChatMsg = React.createClass({
   render() {
       return (
-          <div className="message">
-              <strong>who :</strong> 
-              <span>{this.props.text}</span>        
+          <div>
+          	<p>
+          		<mark>{this.props.userFrom}</mark> {this.props.userChatTo ? ' 對 ' + this.props.userChatTo : ''} 說:{this.props.text}
+          	</p>
           </div>
       );
   }
