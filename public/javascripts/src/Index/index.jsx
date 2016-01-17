@@ -1,11 +1,8 @@
-var $ = require("jquery");
-var _map;
-$(document).ready(function() {
-    _map = new google.maps.Map(document.getElementById('map'), {
-        center: {
-            lat: -34.397,
-            lng: 150.644
-        },
-        zoom: 8
-    });
-});
+var React = require('react');
+var ReactDOM = require('react-dom');
+var Top = require('./Top.jsx');
+
+ReactDOM.render(
+	<Top />,
+	document.getElementById('content')
+	);

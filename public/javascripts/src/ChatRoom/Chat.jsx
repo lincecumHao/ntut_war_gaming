@@ -4,8 +4,6 @@ var MessageForm = require("./ChatForm.jsx");
 var UserList = require("./UserList.jsx");
 var $ =require("jquery");
 
-var socket = io();
-
 var ChatApp = React.createClass({
 
   getInitialState: function() {
@@ -15,25 +13,14 @@ var ChatApp = React.createClass({
         ], 
         messages:[], 
         text: '', 
-        self: {name:""}, 
         chatTo: undefined};
   },
 
   componentDidMount: function() {
-    $.ajax({
-        url: '/currentUser',
-        success: function (res) {
-            this.setState({
-              self: res 
-            });
-            socket.emit('userLogin', this.state.self);
-        }.bind(this)
-    });
-    
-    socket.on("currentUsers", this._getCurrentUsers)
-    socket.on('send:message', this._messageRecieve);
-    socket.on('user:join', this._userJoined);
-    socket.on('user:left', this._userLeft);
+    this.props.socket.on("currentUsers", this._getCurrentUsers)
+    this.props.socket.on('send:message', this._messageRecieve);
+    this.props.socket.on('user:join', this._userJoined);
+    this.props.socket.on('user:left', this._userLeft);
   },
 
   _getCurrentUsers: function(data){
@@ -87,7 +74,7 @@ var ChatApp = React.createClass({
   },
 
   handleMessageSubmit: function(message) {
-      socket.emit('send:message', message);
+      this.props.socket.emit('send:message', message);
   },
 
   render: function() {
@@ -99,12 +86,12 @@ var ChatApp = React.createClass({
                />
               <MessageList
                   messages={this.state.messages}
-                  selfname={this.state.self.name}
+                  selfname={this.props.self.name}
               />
               <MessageForm
                   onMessageSubmit={this.handleMessageSubmit}
                   chatTo={this.state.chatTo}
-                  from={this.state.self.name}
+                  from={this.props.self.name}
               />
           </div>
       );
