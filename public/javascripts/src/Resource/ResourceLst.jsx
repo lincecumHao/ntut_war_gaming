@@ -5,22 +5,22 @@ var ResourceLst = React.createClass({
   render() {
       return (
           <div>
-              <h3> 單位所有資源: </h3>
-              <div className='messages'>
+              <h3> 派出資源: </h3>
+              <form className='messages'>
                 {
                     this.props.resources.map((resource, i) => {
                         return (
                             <ResourceItem
                                 key={i}
                                 resName={resource.name}
-                                resCount={resource.count}
                                 minus={this.props.minus}
                                 plus={this.props.plus}
                             />
                         );
                     })
                 }
-              </div>
+                <button value="send">Send</button>
+              </form>
           </div>
       );
   }
