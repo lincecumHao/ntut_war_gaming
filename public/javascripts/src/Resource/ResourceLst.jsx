@@ -6,15 +6,15 @@ var ResourceLst = React.createClass({
       return (
           <div>
               <h3> 派出資源: </h3>
-              <form className='messages'>
+              <form className='resource'>
                 {
                     this.props.resources.map((resource, i) => {
                         return (
                             <ResourceItem
                                 key={i}
                                 resName={resource.name}
-                                minus={this.props.minus}
-                                plus={this.props.plus}
+                                resCount={resource.count}
+                                edit={this.props.edit}
                             />
                         );
                     })

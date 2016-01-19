@@ -3,19 +3,35 @@ var $ =require("jquery");
 var ResourceLst = require("./ResourceLst.jsx");
 
 var ResourceApp = React.createClass({
+
   getInitialState: function() {
     return {
       resources: [],
-      rendResources: []
+      sendResources: []
     };
   },
-  componentWillMount: function() {
-    this.setState({
-      resources: this.props.resources; 
-    });
+
+  componentDidMount: function() {
+
+    $.get("/currentUser", function(res){
+      this.setState({
+        resources: res.depart.resource
+      });
+      var sendResources = [];
+      for(var i = 0; i < this.state.resources.length; i++){
+        var resource = this.state.resources[i];
+        sendResources.push({
+          name: resource.name,
+          count: 0
+        });
+      }
+      this.setState({
+        sendResources: sendResources
+      });
+    }.bind(this));
   },
 
-  getArrayIndex: function(resName){
+  getArrayIndex: function(resName, ary){
     for(index in this.state.resources){
       if(this.state.resources[index].name == resName){
         return index;
@@ -24,39 +40,41 @@ var ResourceApp = React.createClass({
     return -1;
   },
 
-  minus: function(resName){
-    var currentCount = (this.state.sendResource[resName] ? this.state.sendResource[resName] : 0);
-    if(currentCount + 1 <= maxCount){
-      this.setState({
-        resName: currentCount + 1; 
-      });
+  editSendCount: function(resName, value){
+    var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
+    var currentCout = this.state.sendResources[modifyObjIndex].count;
+    var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
+    if(currentCout + value <= maxCount && currentCout + value >= 0){
+      var ary = this.state.sendResources;
+      ary[modifyObjIndex] = {
+        name: resName,
+        count: currentCout + value
+      }
+      // this.setState({
+      //   sendResources: ary 
+      // });
     }
   },
 
-  plus: function(resName) {
-    var maxCount = this.state.resources[getArrayIndex(resName)].count;
-    var currentCount = (this.state.sendResource[resName] ? this.state.sendResource[resName] : 0);
-    if(currentCount + 1 <= maxCount){
-      this.setState({
-        resName: currentCount + 1; 
-      });
-    }
-  },
-  
   render: function(){
-    <div className="resource">
-      <h3> 單位剩餘資源: </h3>
-      {
-        this.state.resources.map((resource, i) => {
-            return (
-                <div>
-                  <p> {resource.name} : {resource.count} </p>
-                </div>
-            );
-        })
-      }
-      <ResourceLst />
-    </div>
+    return(
+      <div className="resource">
+        <h3> 單位總資源: </h3>
+        {
+          this.props.resources.map((resource, i) => {
+              return (
+                  <div>
+                    <p> {resource.name} : {resource.count} </p>
+                  </div>
+              );
+          })
+        }
+        <ResourceLst 
+          resources={this.state.sendResources}
+          edit={this.editSendCount}
+        />
+      </div>
+    );
   }
 });
 

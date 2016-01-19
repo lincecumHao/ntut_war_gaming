@@ -28483,6 +28483,7 @@ module.exports = UsersList;
 var $ = require("jquery");
 var React = require('react');
 var ChatApp = require('../ChatRoom/Chat.jsx');
+var Resource = require('../Resource/Resource.jsx')
 var socket = io();
 var _map;
 var index = React.createClass({displayName: "index",
@@ -28490,7 +28491,7 @@ var index = React.createClass({displayName: "index",
 	getInitialState: function() {
 		return {
 			user: {name:""},
-			userDepart: {} 
+			userDepart: {resource:[]} 
 		};
 	},
 
@@ -28535,7 +28536,6 @@ var index = React.createClass({displayName: "index",
             //檢查執行結果
             if (status == google.maps.GeocoderStatus.OK) {
                 var loc = results[0].geometry.location;
-                console.log(loc);
                 callback(loc);
             }
             else
@@ -28548,7 +28548,10 @@ var index = React.createClass({displayName: "index",
 	render: function() {
 	      return (
 	          	React.createElement("div", {className: "row full-height"}, 
-	          		React.createElement("div", {id: "resource", className: "col-md-2 full-height"}
+	          		React.createElement("div", {id: "resource", className: "col-md-2 full-height"}, 
+	          			React.createElement(Resource, {
+	          				resources: this.state.userDepart.resource}
+	          			)
 	          		), 
 	          		React.createElement("div", {id: "map", className: "col-md-8 full-height"}
 	          		), 
@@ -28565,7 +28568,7 @@ var index = React.createClass({displayName: "index",
 
 module.exports = index; 
 
-},{"../ChatRoom/Chat.jsx":160,"jquery":28,"react":159}],167:[function(require,module,exports){
+},{"../ChatRoom/Chat.jsx":160,"../Resource/Resource.jsx":168,"jquery":28,"react":159}],167:[function(require,module,exports){
 var React = require('react');
 var ReactDOM = require('react-dom');
 var Top = require('./Top.jsx');
@@ -28575,4 +28578,144 @@ ReactDOM.render(
 	document.getElementById('content')
 	);
 
-},{"./Top.jsx":166,"react":159,"react-dom":30}]},{},[167]);
+},{"./Top.jsx":166,"react":159,"react-dom":30}],168:[function(require,module,exports){
+var React = require('react');
+var $ =require("jquery");
+var ResourceLst = require("./ResourceLst.jsx");
+
+var ResourceApp = React.createClass({displayName: "ResourceApp",
+
+  getInitialState: function() {
+    return {
+      resources: [],
+      sendResources: []
+    };
+  },
+
+  componentDidMount: function() {
+
+    $.get("/currentUser", function(res){
+      this.setState({
+        resources: res.depart.resource
+      });
+      var sendResources = [];
+      for(var i = 0; i < this.state.resources.length; i++){
+        var resource = this.state.resources[i];
+        sendResources.push({
+          name: resource.name,
+          count: 0
+        });
+      }
+      this.setState({
+        sendResources: sendResources
+      });
+    }.bind(this));
+  },
+
+  getArrayIndex: function(resName, ary){
+    for(index in this.state.resources){
+      if(this.state.resources[index].name == resName){
+        return index;
+      }
+    }
+    return -1;
+  },
+
+  editSendCount: function(resName, value){
+    var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
+    var currentCout = this.state.sendResources[modifyObjIndex].count;
+    var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
+    if(currentCout + value <= maxCount && currentCout + value >= 0){
+      var ary = this.state.sendResources;
+      ary[modifyObjIndex] = {
+        name: resName,
+        count: currentCout + value
+      }
+      // this.setState({
+      //   sendResources: ary 
+      // });
+    }
+  },
+
+  render: function(){
+    return(
+      React.createElement("div", {className: "resource"}, 
+        React.createElement("h3", null, " 單位總資源: "), 
+        
+          this.props.resources.map((resource, i) => {
+              return (
+                  React.createElement("div", null, 
+                    React.createElement("p", null, " ", resource.name, " : ", resource.count, " ")
+                  )
+              );
+          }), 
+        
+        React.createElement(ResourceLst, {
+          resources: this.state.sendResources, 
+          edit: this.editSendCount}
+        )
+      )
+    );
+  }
+});
+
+module.exports = ResourceApp; 
+
+},{"./ResourceLst.jsx":170,"jquery":28,"react":159}],169:[function(require,module,exports){
+var React = require('react');
+
+var ResourceItem = React.createClass({displayName: "ResourceItem",
+  render: function() {
+  	return (
+  		React.createElement("div", {className: "input-group"}, 
+  		  React.createElement("span", {className: "input-group-addon"}, this.props.resName), 
+		  React.createElement("span", {className: "input-group-btn"}, 
+        React.createElement("button", {className: "btn btn-success btn-block", onclick: this.props.edit(this.props.resName, -1)}, 
+            React.createElement("span", {className: "glyphicon glyphicon-minus"})
+        )
+    	), 
+		  React.createElement("input", {type: "text", className: "form-control", value: this.props.resCount, readonly: true}), 
+		  React.createElement("span", {className: "input-group-btn"}, 
+        React.createElement("button", {className: "btn btn-success btn-block", onclick: this.props.edit(this.props.resName, 1)}, 
+            React.createElement("span", {className: "glyphicon glyphicon-plus"})
+        )
+  	  )
+		)
+  	);
+  }
+});
+
+module.exports = ResourceItem;  
+
+},{"react":159}],170:[function(require,module,exports){
+var React = require('react');
+var ResourceItem = require("./ResourceItem.jsx");
+
+var ResourceLst = React.createClass({displayName: "ResourceLst",
+  render() {
+      return (
+          React.createElement("div", null, 
+              React.createElement("h3", null, " 派出資源: "), 
+              React.createElement("form", {className: "resource"}, 
+                
+                    this.props.resources.map((resource, i) => {
+                        return (
+                            React.createElement(ResourceItem, {
+                                key: i, 
+                                resName: resource.name, 
+                                resCount: resource.count, 
+                                edit: this.props.edit}
+                            )
+                        );
+                    }), 
+                
+                React.createElement("button", {value: "send"}, "Send")
+              )
+          )
+      );
+  }
+});
+
+module.exports = ResourceLst;  
+
+},{"./ResourceItem.jsx":169,"react":159}]},{},[167]);

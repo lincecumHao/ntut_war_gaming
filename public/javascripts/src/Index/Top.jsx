@@ -1,6 +1,7 @@
 var $ = require("jquery");
 var React = require('react');
 var ChatApp = require('../ChatRoom/Chat.jsx');
+var Resource = require('../Resource/Resource.jsx')
 var socket = io();
 var _map;
 var index = React.createClass({
@@ -8,7 +9,7 @@ var index = React.createClass({
 	getInitialState: function() {
 		return {
 			user: {name:""},
-			userDepart: {} 
+			userDepart: {resource:[]} 
 		};
 	},
 
@@ -66,6 +67,9 @@ var index = React.createClass({
 	      return (
 	          	<div className='row full-height'>
 	          		<div id="resource" className="col-md-2 full-height">
+	          			<Resource 
+	          				resources={this.state.userDepart.resource}
+	          			/>
 	          		</div>
 	          		<div id="map" className="col-md-8 full-height">
 	          		</div>
