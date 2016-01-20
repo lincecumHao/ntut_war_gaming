@@ -19,3 +19,13 @@ div.col-md-2 {
 	overflow-y: scroll; 
 	background: beige;
 }
+
+.resInput{
+    text-align: right
+}
+
+.input-group-addon {
+    min-width:70px;
+    text-align:center;
+    font-size: 12px
+}

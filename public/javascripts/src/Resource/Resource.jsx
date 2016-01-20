@@ -41,6 +41,7 @@ var ResourceApp = React.createClass({
   },
 
   editSendCount: function(resName, value){
+    console.log("edit send");
     var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
     var currentCout = this.state.sendResources[modifyObjIndex].count;
     var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
@@ -50,9 +51,9 @@ var ResourceApp = React.createClass({
         name: resName,
         count: currentCout + value
       }
-      // this.setState({
-      //   sendResources: ary 
-      // });
+      this.setState({
+        sendResources: ary 
+      });
     }
   },
 
@@ -63,7 +64,7 @@ var ResourceApp = React.createClass({
         {
           this.props.resources.map((resource, i) => {
               return (
-                  <div>
+                  <div key={i}>
                     <p> {resource.name} : {resource.count} </p>
                   </div>
               );

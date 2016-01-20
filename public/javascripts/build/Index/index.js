@@ -28622,6 +28622,7 @@ var ResourceApp = React.createClass({displayName: "ResourceApp",
   },
 
   editSendCount: function(resName, value){
+    console.log("edit send");
     var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
     var currentCout = this.state.sendResources[modifyObjIndex].count;
     var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
@@ -28631,9 +28632,9 @@ var ResourceApp = React.createClass({displayName: "ResourceApp",
         name: resName,
         count: currentCout + value
       }
-      // this.setState({
-      //   sendResources: ary 
-      // });
+      this.setState({
+        sendResources: ary 
+      });
     }
   },
 
@@ -28644,7 +28645,7 @@ var ResourceApp = React.createClass({displayName: "ResourceApp",
         
           this.props.resources.map((resource, i) => {
               return (
-                  React.createElement("div", null, 
+                  React.createElement("div", {key: i}, 
                     React.createElement("p", null, " ", resource.name, " : ", resource.count, " ")
                   )
               );
@@ -28665,18 +28666,29 @@ module.exports = ResourceApp;
 var React = require('react');
 
 var ResourceItem = React.createClass({displayName: "ResourceItem",
+  hadleMinus: function(e){
+    e.preventDefault();
+    console.log("minus");
+    this.props.edit(this.props.resName, -1);
+  },
+
+  handlePlus: function(e){
+    e.preventDefault();
+    this.props.edit(this.props.resName, 1);
+  },
+
   render: function() {
   	return (
   		React.createElement("div", {className: "input-group"}, 
   		  React.createElement("span", {className: "input-group-addon"}, this.props.resName), 
 		  React.createElement("span", {className: "input-group-btn"}, 
-        React.createElement("button", {className: "btn btn-success btn-block", onclick: this.props.edit(this.props.resName, -1)}, 
+        React.createElement("button", {className: "btn btn-success btn-block", onClick: this.hadleMinus}, 
             React.createElement("span", {className: "glyphicon glyphicon-minus"})
         )
     	), 
-		  React.createElement("input", {type: "text", className: "form-control", value: this.props.resCount, readonly: true}), 
+		  React.createElement("input", {type: "text", className: "form-control resInput", value: this.props.resCount, readOnly: true}), 
 		  React.createElement("span", {className: "input-group-btn"}, 
-        React.createElement("button", {className: "btn btn-success btn-block", onclick: this.props.edit(this.props.resName, 1)}, 
+        React.createElement("button", {className: "btn btn-success btn-block", onClick: this.handlePlus}, 
             React.createElement("span", {className: "glyphicon glyphicon-plus"})
         )
   	  )
@@ -28692,11 +28704,17 @@ var React = require('react');
 var ResourceItem = require("./ResourceItem.jsx");
 
 var ResourceLst = React.createClass({displayName: "ResourceLst",
-  render() {
+  
+  handelSubmit: function(e){
+    e.preventDefault();
+    console.log("submit");
+  },
+
+  render: function() {
       return (
           React.createElement("div", null, 
               React.createElement("h3", null, " 派出資源: "), 
-              React.createElement("form", {className: "resource"}, 
+              React.createElement("form", {className: "resource", role: "form", onSubmit: this.handelSubmit}, 
                 
                     this.props.resources.map((resource, i) => {
                         return (
