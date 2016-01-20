@@ -40,6 +40,12 @@ var ResourceApp = React.createClass({
     return -1;
   },
 
+  sendResource: function(e){
+    e.preventDefault();
+    console.log("submit");
+    console.log(this.state.sendResources);
+  },
+
   editSendCount: function(resName, value){
     console.log("edit send");
     var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
@@ -73,6 +79,7 @@ var ResourceApp = React.createClass({
         <ResourceLst 
           resources={this.state.sendResources}
           edit={this.editSendCount}
+          sumbit: {this.sendResource}
         />
       </div>
     );

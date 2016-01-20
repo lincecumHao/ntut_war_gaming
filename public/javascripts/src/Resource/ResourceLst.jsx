@@ -3,16 +3,11 @@ var ResourceItem = require("./ResourceItem.jsx");
 
 var ResourceLst = React.createClass({
   
-  handelSubmit: function(e){
-    e.preventDefault();
-    console.log("submit");
-  },
-
   render: function() {
       return (
           <div>
               <h3> 派出資源: </h3>
-              <form className='resource' role='form' onSubmit={this.handelSubmit}>
+              <form className='resource' role='form' onSubmit={this.props.submit}>
                 {
                     this.props.resources.map((resource, i) => {
                         return (
