@@ -25,6 +25,13 @@ router.post('/login', function(req, res) {
             });
         } else {
             var user = users[0];
+            if(user.username == "admin"){
+                console.log("admin login");
+                sess.user = user;
+                res.json({
+                        status: 1
+                    });
+            }
             department.find({depart_id: user.subordinate}, function(err, depart){
                 if(depart.length > 0){
                     var usertmp = user;

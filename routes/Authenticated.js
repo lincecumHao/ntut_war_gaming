@@ -8,9 +8,7 @@ router.use(function(req, res, next) {
         console.log('You are not authorized to view this page');
         res.render('login');
     } else {
-    	console.log("Login.");
-    	//res.redirect("/index");
-        next();
+    	next();
     }
 });
 
