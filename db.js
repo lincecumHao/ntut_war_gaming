@@ -14,8 +14,9 @@ var department = new Schema({
 }, { collection: 'department' });
 
 var Logs = new Schema({
-    timd: String,
-    log: String
+    time: String,
+    from: String,
+    send: Array
 }, { collection: 'Logs' });
  
 mongoose.model( 'user', user );

@@ -11,6 +11,7 @@ var login = require('./routes/login');
 var autenticated = require('./routes/Authenticated');
 var index = require('./routes/index');
 var jobRoutes = require("./routes/jobRoutes");
+var sendResource = require("./routes/SendResourceLog.js")
 
 //test socket.io
 var app = express();
@@ -45,6 +46,7 @@ app.use('/', login);
 app.use('/', autenticated);
 app.use('/', index);
 app.use("/api", jobRoutes);
+app.use("/sendRes" , sendResource);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

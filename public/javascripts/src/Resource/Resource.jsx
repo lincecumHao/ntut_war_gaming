@@ -42,12 +42,13 @@ var ResourceApp = React.createClass({
 
   sendResource: function(e){
     e.preventDefault();
-    console.log("submit");
-    console.log(this.state.sendResources);
+    var data = {
+      res: this.state.sendResources
+    }
+    $.post( "/sendRes", data);
   },
 
   editSendCount: function(resName, value){
-    console.log("edit send");
     var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
     var currentCout = this.state.sendResources[modifyObjIndex].count;
     var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
@@ -79,7 +80,7 @@ var ResourceApp = React.createClass({
         <ResourceLst 
           resources={this.state.sendResources}
           edit={this.editSendCount}
-          sumbit: {this.sendResource}
+          sumbit={this.sendResource}
         />
       </div>
     );

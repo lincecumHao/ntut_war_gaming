@@ -28621,8 +28621,15 @@ var ResourceApp = React.createClass({displayName: "ResourceApp",
     return -1;
   },
 
+  sendResource: function(e){
+    e.preventDefault();
+    var data = {
+      res: this.state.sendResources
+    }
+    $.post( "/sendRes", data);
+  },
+
   editSendCount: function(resName, value){
-    console.log("edit send");
     var modifyObjIndex = this.getArrayIndex(resName, this.state.sendResources);
     var currentCout = this.state.sendResources[modifyObjIndex].count;
     var maxCount = this.state.resources[this.getArrayIndex(resName, this.state.resources)].count;
@@ -28653,7 +28660,8 @@ var ResourceApp = React.createClass({displayName: "ResourceApp",
         
         React.createElement(ResourceLst, {
           resources: this.state.sendResources, 
-          edit: this.editSendCount}
+          edit: this.editSendCount, 
+          sumbit: this.sendResource}
         )
       )
     );
@@ -28705,16 +28713,11 @@ var ResourceItem = require("./ResourceItem.jsx");
 
 var ResourceLst = React.createClass({displayName: "ResourceLst",
   
-  handelSubmit: function(e){
-    e.preventDefault();
-    console.log("submit");
-  },
-
   render: function() {
       return (
           React.createElement("div", null, 
               React.createElement("h3", null, " 派出資源: "), 
-              React.createElement("form", {className: "resource", role: "form", onSubmit: this.handelSubmit}, 
+              React.createElement("form", {className: "resource", role: "form", onSubmit: this.props.submit}, 
                 
                     this.props.resources.map((resource, i) => {
                         return (
@@ -28727,7 +28730,7 @@ var ResourceLst = React.createClass({displayName: "ResourceLst",
                         );
                     }), 
                 
-                React.createElement("button", {value: "send"}, "Send")
+                React.createElement("button", {value: "send", onClick: this.props.sumbit}, "Send")
               )
           )
       );

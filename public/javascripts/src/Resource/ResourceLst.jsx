@@ -20,7 +20,7 @@ var ResourceLst = React.createClass({
                         );
                     })
                 }
-                <button value="send">Send</button>
+                <button value="send" onClick={this.props.sumbit}>Send</button>
               </form>
           </div>
       );
