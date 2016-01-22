@@ -22,9 +22,7 @@ router.post('/', function(req, res, next) {
     }
   });
 
-	console.log(sendAry);
-
-  var sendLog = new Log({
+	var sendLog = new Log({
     time: new Date(),
     from: req.session.user.name,
     send: sendAry

@@ -1,5 +1,27 @@
 extend layout
 
 block content
+ link(rel='stylesheet', href='/stylesheets/Index/index.css')
  #content.container-fluid
   .row.full-height
+   .col-md-10.full-height
+    .row
+      .col-md-12.situation 789
+    .row.custom-content
+     .col-md-2 123
+     .col-md-10 456
+    footer.footer
+     .container
+      p.text-muted Place sticky footer content here.
+   .col-md-2.full-height
+    div(role='tabpanel')
+     ul.nav.nav-tabs.nav-justified(role='tablist')
+      li.active(role='presentation')
+       a(href='#event', aria-controls='home', role='tab', data-toggle='tab') 事件
+      li(role='presentation')
+        a(href='#chatroom', aria-controls='profile', role='tab', data-toggle='tab') 溝通室
+     .tab-content
+      #event.tab-pane.active(role='tabpanel')
+       div home
+       button 
+      #chatroom.tab-pane(role='tabpanel') profile

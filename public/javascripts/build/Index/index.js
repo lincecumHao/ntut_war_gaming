@@ -28730,7 +28730,7 @@ var ResourceLst = React.createClass({displayName: "ResourceLst",
                         );
                     }), 
                 
-                React.createElement("button", {value: "send", onClick: this.props.sumbit}, "Send")
+                React.createElement("button", {value: "send", onClick: this.props.sumbit, className: "btn btn-success"}, "送出")
               )
           )
       );
