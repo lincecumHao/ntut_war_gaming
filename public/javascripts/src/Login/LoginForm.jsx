@@ -1,7 +1,4 @@
 var React = require('react');
-var request = require('request');
-var $ = require("jquery");
-
 var LoginForm = React.createClass({
 
 	getInitialState: function() {

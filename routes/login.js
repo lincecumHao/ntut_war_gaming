@@ -3,7 +3,7 @@ var router = express.Router();
 var $ = require("jquery");
 var mongoose = require('mongoose');
 var user = mongoose.model('user');
-var department = mongoose.model('department');
+var departments = mongoose.model('departments');
 
 router.post('/login', function(req, res) {
     var sess = req.session;
@@ -32,18 +32,19 @@ router.post('/login', function(req, res) {
                         status: 1
                     });
             }
-            department.find({depart_id: user.subordinate}, function(err, depart){
+            departments.find({type: user.unit}, function(err, depart){
                 if(depart.length > 0){
                     var usertmp = user;
                     sess.user = user;
-                    sess.depart = depart[0];
+                    sess.depart = depart;
                     res.json({
                         status: 1,
                         error: "",
                         user: user,
                     });
                 }
-            });
+            }).sort( { level: 1 } );
+
         }
     });
 });
@@ -62,7 +63,7 @@ router.get('/logout', function(req, res) {
 
 router.get('/currentUser', function(req, res) {
     var sess = req.session;
-    res.json({user: sess.user, depart: sess.depart});
+    res.json({user: sess.user, departs: sess.depart});
 });
 
 module.exports = router;

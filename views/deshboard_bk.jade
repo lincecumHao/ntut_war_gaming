@@ -1,0 +1,36 @@
+extend layout
+
+block content
+ link(rel='stylesheet', href='/stylesheets/Index/index.css')
+ script(src='https://maps.googleapis.com/maps/api/js?')
+ script(src="/bower_components/socket.io-client/socket.io.js")
+ #content.container-fluid
+  .row.full-height
+   #situation_wrapper.col-md-10.full-height
+    #situation.row
+     .col-md-12.situation
+      h3.situation_step 災害發生初期階段
+      h3.situation_description 臺北盆地因發生隱沒帶之強烈地震
+      #system_time 演練時間: 00:00:00
+    .row.custom-content
+     .col-md-2 123
+     #wrapper.col-md-10
+      #map.map map
+      #over_map overlay
+      
+    footer.footer
+     .container-fluid
+      .row
+       .col-md-2.eagle-map
+       .col-md-9 123
+       .col-md-1 person
+   .col-md-2.full-height.chat
+    .row.login-user
+    .row.message-list
+    .row.send-message
+     .input-group.same-height
+      input.form-control(type='text')
+      span.input-group-btn
+       button.btn.btn-success.same-height(type='button') 送出
+ 
+ script(src="/javascripts/build/index.js")

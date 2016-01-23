@@ -5,6 +5,7 @@ var user = new Schema({
     name: String,
     username: String,
     password: String,
+    unit: String,
     subordinate: String
 }, { collection: 'user' });
 
@@ -12,6 +13,18 @@ var department = new Schema({
     name: String,
     address: String
 }, { collection: 'department' });
+
+var departments = new Schema({
+    level: Number,
+    type: String,
+    parent: String,
+    name: String,
+    phone: String,
+    address: String,
+    lat: Number,
+    lng: Number,
+    Resource: Object
+}, { collection: 'departments' });
 
 var Logs = new Schema({
     time: String,
@@ -21,6 +34,7 @@ var Logs = new Schema({
  
 mongoose.model( 'user', user );
 mongoose.model( 'department', department );
+mongoose.model( 'departments', departments );
 mongoose.model( 'Logs', Logs );
 mongoose.connect( 'mongodb://lincecum:O4dv6q9AJSHpFEH1dzjG@ds045684.mongolab.com:45684/war_game', function(err) {
     if (err) throw err;

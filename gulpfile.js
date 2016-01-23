@@ -12,33 +12,42 @@ var source = require('vinyl-source-stream');
 //         .pipe(gulp.dest('public/javascripts/build/'));
 // });
 
-gulp.task('login', function(){
-    browserify('public/javascripts/src/Login/Login.jsx')
-        .transform(reactify)
-        .bundle()
-        .pipe(source('Login.js'))
-        .pipe(gulp.dest('public/javascripts/build/Login/'));
-});
+// gulp.task('login', function(){
+//     browserify('public/javascripts/src/Login/Login.jsx')
+//         .transform(reactify)
+//         .bundle()
+//         .pipe(source('Login.js'))
+//         .pipe(gulp.dest('public/javascripts/build/Login/'));
+// });
 
-gulp.task('index', function(){
-    browserify('public/javascripts/src/Index/index.jsx')
+// gulp.task('index', function(){
+//     browserify('public/javascripts/src/Index/index.jsx')
+//         .transform(reactify)
+//         .bundle()
+//         .pipe(source('index.js'))
+//         .pipe(gulp.dest('public/javascripts/build/Index/'));
+// });
+
+// gulp.task('chatroom', function(){
+//     browserify('public/javascripts/src/ChatRoom/ChatRoom.jsx')
+//         .transform(reactify)
+//         .bundle()
+//         .pipe(source('ChatRoom.js'))
+//         .pipe(gulp.dest('public/javascripts/build/ChatRoom/'));
+// });
+
+gulp.task('refIndex', function(){
+    browserify('public/javascripts/src/index.jsx')
         .transform(reactify)
         .bundle()
         .pipe(source('index.js'))
-        .pipe(gulp.dest('public/javascripts/build/Index/'));
-});
-
-gulp.task('chatroom', function(){
-    browserify('public/javascripts/src/ChatRoom/ChatRoom.jsx')
-        .transform(reactify)
-        .bundle()
-        .pipe(source('ChatRoom.js'))
-        .pipe(gulp.dest('public/javascripts/build/ChatRoom/'));
+        .pipe(gulp.dest('public/javascripts/build/'));
 });
 
 gulp.task('watch', function() {
     // gulp.watch("public/javascripts/src/**/*.jsx", ["js", "login", "index", "chatroom"])
-    gulp.watch("public/javascripts/src/**/*.jsx", ["login", "index", "chatroom"])
+    // gulp.watch("public/javascripts/src/**/*.jsx", ["login", "index", "chatroom"])
+    gulp.watch("public/javascripts/src/**/*.jsx", ["refIndex"])
 })
 
 gulp.task('default', ['watch']);
