@@ -62,6 +62,7 @@ module.exports = function (socket) {
   var name;
 
   socket.on("userLogin", function(user){
+    console.log(user);
     name = user.name;
     ChatRoomUserNames.free(name);
     socket.emit("currentUsers", ChatRoomUserNames.getAll());
@@ -71,13 +72,8 @@ module.exports = function (socket) {
 
   // broadcast a user's message to other users
   socket.on('send:message', function (data) {
-    var msgObj = {
-      from: name,
-      text: data.text,
-      chatTo: data.chatTo
-    };
-    socket.emit('send:message', msgObj);
-    socket.broadcast.emit('send:message', msgObj);
+    socket.emit('send:message', data);
+    socket.broadcast.emit('send:message', data);
   });
 
   // clean up when a user leaves, and broadcast it to other users

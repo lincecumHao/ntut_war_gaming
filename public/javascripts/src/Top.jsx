@@ -1,5 +1,11 @@
 var React = require("react");
-var SituationApp = require("./Situation/SituationApp.jsx")
+var SituationApp = require("./Situation/SituationApp.jsx");
+
+//Chatroom 
+var MessageList = require("./Chatroom/ChatMsgLst.jsx");
+var MessageForm = require("./Chatroom/ChatForm.jsx");
+var UserList = require("./Chatroom/UserList.jsx");
+
 var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 var socket = io();
@@ -11,7 +17,11 @@ var Top = React.createClass({
 
 	getInitialState: function() {
 		return {
-			user: {},
+			user: {name:""},
+			users: ["all"],
+			messages: [],
+			text: '',
+			chatTo: undefined,
 			departs:[],
 			treeData: [],
 			situation: {
@@ -47,13 +57,17 @@ var Top = React.createClass({
 			this.setState({
 				treeData: this._formatDeparts(res.departs)
 			});
-			console.log(this.state.treeData);
+			socket.emit('userLogin', this.state.user);
 		}.bind(this));
 	},
 
 	componentDidMount: function() {
 		setTimeout(this._fakeChangeSituation, 10000);
 		this._initMaps();
+		socket.on("currentUsers", this._getCurrentUsers)
+	    socket.on('send:message', this._messageRecieve);
+	    socket.on('user:join', this._userJoined);
+	    socket.on('user:left', this._userLeft);
 	},
 
 	_formatDeparts: function(departs){
@@ -104,16 +118,39 @@ var Top = React.createClass({
 	        },
 	        zoom: 15
 		};
+		
 		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
 		_mainMap.addListener("center_changed", function() {
-			_eagleMap.setCenter(_mainMap.getCenter());    
-		});
+			_eagleMap.setCenter(_mainMap.getCenter());   
+			this._checkBounds();  
+		}.bind(this));
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
 		_eagleMap.set("scrollwheel", false);
 		_eagleMap.set("draggable", false)
 	},
+
+	_checkBounds: function(){
+		var allowedBounds = new google.maps.LatLngBounds(new google.maps.LatLng(25.019051, 121.495545), new google.maps.LatLng(25.078147, 121.624291));
+		if(! allowedBounds.contains(_mainMap.getCenter())) {
+			var C = _mainMap.getCenter();
+			var X = C.lng();
+			var Y = C.lat();
+
+			var AmaxX = allowedBounds.getNorthEast().lng();
+			var AmaxY = allowedBounds.getNorthEast().lat();
+			var AminX = allowedBounds.getSouthWest().lng();
+			var AminY = allowedBounds.getSouthWest().lat();
+
+			if (X < AminX) {X = AminX;}
+			if (X > AmaxX) {X = AmaxX;}
+			if (Y < AminY) {Y = AminY;}
+			if (Y > AmaxY) {Y = AmaxY;}
+
+			_mainMap.setCenter(new google.maps.LatLng(Y,X));
+		}
+    },
 
 	_getFormatedSystemTime: function(){
 		var date = new Date();
@@ -130,9 +167,58 @@ var Top = React.createClass({
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
+		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+	},
 
-    this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+  _getCurrentUsers: function(data){
+  	console.log(data);
+    if(data){
+        this.setState({
+        users: this.state.users.concat(data) 
+      });
+    }
+  },
 
+  _messageRecieve: function(messageObj) {
+  	  var stateMsgs = this.state.messages;
+      stateMsgs.push(messageObj);
+      this.setState({messages: stateMsgs});
+  },
+
+  _userJoined: function(username) {
+      var currentUsers = this.state.users;
+      if(currentUsers.indexOf(username) > -1) {
+        return;
+      }
+      var currentMessages = this.state.messages;
+      currentUsers.push(username);
+      currentMessages.push({
+        from : "系統",
+        text : username +' 已加入'
+      });
+      this.setState({users: currentUsers, messages: currentMessages});
+  },
+
+  _userLeft: function(username) {
+      var currentUsers = this.state.users;
+      var currentMessages = this.state.messages;
+      var index = currentUsers.indexOf(username);
+      currentUsers.splice(index, 1);
+      currentMessages.push({
+        from : "系統",
+        text : username +' 已離開'
+      });
+      this.setState({users: currentUsers, messages: currentMessages});
+  },
+
+  onChatTo: function(username){
+    this.setState({
+      chatTo: (username == "all" ? undefined : username) 
+    });
+  },
+
+  handleMessageSubmit: function(message) {
+  	socket.emit('send:message', message);
   },
 
 	render: function() {
@@ -141,17 +227,18 @@ var Top = React.createClass({
 				<div id="situation_wrapper" className="col-md-10 full-height">
 				  <div id="situation" className="row">
 				  	<SituationApp
-									step={this.state.situation.step}
-									description={this.state.situation.description}
-									systemTime={this.state.systemTime}
-								/>
+						step={this.state.situation.step}
+						description={this.state.situation.description}
+						systemTime={this.state.systemTime}
+					/>
 				  </div>
 				  <div className="row custom-content">
 				    <div id="departList" className="col-md-2">
-				    	<TreeMenu 
+				    	<TreeMenu
+				    		onTreeNodeCheckChange={this._handleDynamicTreeNodePropChange.bind(this, "checked")} 
 				    		onTreeNodeCollapseChange={this._handleDynamicTreeNodePropChange.bind(this, "collapsed")}
 				    		expandIconClass="fa fa-chevron-right"
-	        			collapseIconClass="fa fa-chevron-down"
+	        				collapseIconClass="fa fa-chevron-down"
 					    	data={this.state.treeData} 
 				    	/>
 				    </div>
@@ -171,16 +258,18 @@ var Top = React.createClass({
 				  </footer>
 				</div>
 				<div className="col-md-2 full-height chat">
-				  <div className="row login-user"></div>
-				  <div className="row message-list"></div>
-				  <div className="row send-message">
-				    <div className="input-group same-height">
-				      <input type="text" className="form-control"/>
-				      	<span className="input-group-btn">
-				        	<button type="button" className="btn btn-success same-height">送出</button>
-				        </span>
-				    </div>
-				  </div>
+					<UserList 
+		                users={this.state.users}
+		                onChatTo={this.onChatTo}
+					/>
+					<MessageList
+						messages={this.state.messages}
+	              	/>
+					<MessageForm
+						onMessageSubmit={this.handleMessageSubmit}
+						chatTo={this.state.chatTo}
+						from={this.state.user.name}
+					/>
 				</div>
 			</div>
 		);

@@ -2,28 +2,12 @@ div.col-md-2 {
     background: rgba(0, 0, 0, 0.3);
 }
 
-#sendMsgFormHolder {
-    /* 設定footer絕對位置在底部 */
-    /*position: absolute;*/
-    position: absolute;
-    bottom: 0;
-    /* 展開footer寬度 */
-}
-
 .messages {
-    height: 80vh;
-    overflow-y: scroll;
     background: beige;
 }
 
 .resInput {
     text-align: right
-}
-
-.input-group-addon {
-    min-width: 70px;
-    text-align: center;
-    font-size: 12px
 }
 
 .nav-tabs li a {

@@ -22550,6 +22550,153 @@ module.exports = require('./lib/React');
 },{"./lib/React":142}],248:[function(require,module,exports){
 var React = require('react');
 
+var ChatForm = React.createClass({displayName: "ChatForm",
+
+	getInitialState: function() {
+		return {
+			text: "",
+			chatTo: undefined
+		};
+	},
+
+	componentWillMount: function() {
+		if(this.props.userChatTo){
+			this.setState({
+				chatTo: this.props.userChatTo
+			});
+		}
+	},
+
+	handelSubmit: function(e){
+		e.preventDefault();
+		var message = {
+			from : this.props.from,
+          	text : this.state.text,
+          	chatTo : this.props.chatTo
+      	}
+      	this.props.onMessageSubmit(message);
+		this.setState({ text: '', chatTo: undefined });
+	},
+
+	handelMessage: function(e){
+		this.setState({
+			text: e.target.value 
+		});
+	},
+
+	render: function() {
+		return (
+			React.createElement("div", {id: "sendMsgFormHolder", className: "row send-message"}, 
+				React.createElement("form", {onSubmit: this.handelSubmit}, 
+					React.createElement("div", {className: "input-group same-height"}, 
+						React.createElement("input", {type: "text", className: "form-control", placeholder: this.props.chatTo ? "對" + this.props.chatTo + "說" : "訊息", onChange: this.handelMessage, value: this.state.text}), 
+				      	React.createElement("span", {className: "input-group-btn"}, 
+				        	React.createElement("button", {type: "submit", className: "btn btn-success same-height"}, "送出")
+				        )
+					)
+				)
+			)
+		);
+	}
+
+});
+
+module.exports = ChatForm;	
+
+},{"react":247}],249:[function(require,module,exports){
+var React = require('react');
+
+var ChatMsg = React.createClass({displayName: "ChatMsg",
+  render() {
+      return (
+          React.createElement("div", null, 
+          	React.createElement("p", null, 
+          		React.createElement("mark", null, this.props.userFrom), " ", this.props.userChatTo ? ' 對 ' + this.props.userChatTo : '', " 說:", this.props.text
+          	)
+          )
+      );
+  }
+});
+
+module.exports = ChatMsg;  
+
+},{"react":247}],250:[function(require,module,exports){
+var React = require('react');
+var Message = require("./ChatMsg.jsx");
+
+var MessageList = React.createClass({displayName: "MessageList",
+  render() {
+      return (
+          React.createElement("div", {className: "row message-list"}, 
+              React.createElement("h3", null, " 對話框: "), 
+              React.createElement("div", {className: "messages"}, 
+                
+                    this.props.messages.map((message, i) => {
+                        return (
+                            React.createElement(Message, {
+                                key: i, 
+                                text: message.text, 
+                                userChatTo: message.chatTo, 
+                                userFrom: message.from}
+                            )
+                        );
+                    })
+                
+              )
+          )
+      );
+  }
+});
+
+module.exports = MessageList;  
+
+},{"./ChatMsg.jsx":249,"react":247}],251:[function(require,module,exports){
+var React = require('react');
+
+var User = React.createClass({displayName: "User",
+
+	handleChatTo: function(e){
+		e.preventDefault();
+		this.props.onChatTo(this.props.user);
+	},
+  	render: function(){
+  		return (
+        	React.createElement("button", {type: "button", className: "btn btn-primary btn-xs", onClick: this.handleChatTo}, this.props.user)
+      	);
+  	}
+});
+
+module.exports = User;  
+
+},{"react":247}],252:[function(require,module,exports){
+var React = require('react');
+var User = require('./User.jsx');
+
+var UsersList = React.createClass({displayName: "UsersList",
+  render: function() {
+      return (
+          React.createElement("div", {className: "row login-user"}, 
+              React.createElement("h3", null, " 目前使用者 "), 
+                  
+                      this.props.users.map((user, i) => {
+                          return (
+                              React.createElement(User, {
+                              	key: i, 
+                              	user: user, 
+                               	onChatTo: this.props.onChatTo})
+                          );
+                      })
+                  
+          )
+      );
+  }
+});
+
+module.exports = UsersList;  
+
+},{"./User.jsx":251,"react":247}],253:[function(require,module,exports){
+var React = require('react');
+
 var SituationApp = React.createClass({displayName: "SituationApp",
 
 	render: function() {
@@ -22566,7 +22713,7 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 
 module.exports = SituationApp;
 
-},{"react":247}],249:[function(require,module,exports){
+},{"react":247}],254:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -22576,9 +22723,15 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":250,"react":247,"react-dom":112}],250:[function(require,module,exports){
+},{"./top.jsx":255,"react":247,"react-dom":112}],255:[function(require,module,exports){
 var React = require("react");
-var SituationApp = require("./Situation/SituationApp.jsx")
+var SituationApp = require("./Situation/SituationApp.jsx");
+
+//Chatroom 
+var MessageList = require("./Chatroom/ChatMsgLst.jsx");
+var MessageForm = require("./Chatroom/ChatForm.jsx");
+var UserList = require("./Chatroom/UserList.jsx");
+
 var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 var socket = io();
@@ -22590,7 +22743,11 @@ var Top = React.createClass({displayName: "Top",
 
 	getInitialState: function() {
 		return {
-			user: {},
+			user: {name:""},
+			users: ["all"],
+			messages: [],
+			text: '',
+			chatTo: undefined,
 			departs:[],
 			treeData: [],
 			situation: {
@@ -22626,13 +22783,17 @@ var Top = React.createClass({displayName: "Top",
 			this.setState({
 				treeData: this._formatDeparts(res.departs)
 			});
-			console.log(this.state.treeData);
+			socket.emit('userLogin', this.state.user);
 		}.bind(this));
 	},
 
 	componentDidMount: function() {
 		setTimeout(this._fakeChangeSituation, 10000);
 		this._initMaps();
+		socket.on("currentUsers", this._getCurrentUsers)
+	    socket.on('send:message', this._messageRecieve);
+	    socket.on('user:join', this._userJoined);
+	    socket.on('user:left', this._userLeft);
 	},
 
 	_formatDeparts: function(departs){
@@ -22683,16 +22844,39 @@ var Top = React.createClass({displayName: "Top",
 	        },
 	        zoom: 15
 		};
+		
 		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
 		_mainMap.addListener("center_changed", function() {
-			_eagleMap.setCenter(_mainMap.getCenter());    
-		});
+			_eagleMap.setCenter(_mainMap.getCenter());   
+			this._checkBounds();  
+		}.bind(this));
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
 		_eagleMap.set("scrollwheel", false);
 		_eagleMap.set("draggable", false)
 	},
+
+	_checkBounds: function(){
+		var allowedBounds = new google.maps.LatLngBounds(new google.maps.LatLng(25.019051, 121.495545), new google.maps.LatLng(25.078147, 121.624291));
+		if(! allowedBounds.contains(_mainMap.getCenter())) {
+			var C = _mainMap.getCenter();
+			var X = C.lng();
+			var Y = C.lat();
+
+			var AmaxX = allowedBounds.getNorthEast().lng();
+			var AmaxY = allowedBounds.getNorthEast().lat();
+			var AminX = allowedBounds.getSouthWest().lng();
+			var AminY = allowedBounds.getSouthWest().lat();
+
+			if (X < AminX) {X = AminX;}
+			if (X > AmaxX) {X = AmaxX;}
+			if (Y < AminY) {Y = AminY;}
+			if (Y > AmaxY) {Y = AmaxY;}
+
+			_mainMap.setCenter(new google.maps.LatLng(Y,X));
+		}
+    },
 
 	_getFormatedSystemTime: function(){
 		var date = new Date();
@@ -22709,9 +22893,58 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
+		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+	},
 
-    this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+  _getCurrentUsers: function(data){
+  	console.log(data);
+    if(data){
+        this.setState({
+        users: this.state.users.concat(data) 
+      });
+    }
+  },
 
+  _messageRecieve: function(messageObj) {
+  	  var stateMsgs = this.state.messages;
+      stateMsgs.push(messageObj);
+      this.setState({messages: stateMsgs});
+  },
+
+  _userJoined: function(username) {
+      var currentUsers = this.state.users;
+      if(currentUsers.indexOf(username) > -1) {
+        return;
+      }
+      var currentMessages = this.state.messages;
+      currentUsers.push(username);
+      currentMessages.push({
+        from : "系統",
+        text : username +' 已加入'
+      });
+      this.setState({users: currentUsers, messages: currentMessages});
+  },
+
+  _userLeft: function(username) {
+      var currentUsers = this.state.users;
+      var currentMessages = this.state.messages;
+      var index = currentUsers.indexOf(username);
+      currentUsers.splice(index, 1);
+      currentMessages.push({
+        from : "系統",
+        text : username +' 已離開'
+      });
+      this.setState({users: currentUsers, messages: currentMessages});
+  },
+
+  onChatTo: function(username){
+    this.setState({
+      chatTo: (username == "all" ? undefined : username) 
+    });
+  },
+
+  handleMessageSubmit: function(message) {
+  	socket.emit('send:message', message);
   },
 
 	render: function() {
@@ -22720,17 +22953,18 @@ var Top = React.createClass({displayName: "Top",
 				React.createElement("div", {id: "situation_wrapper", className: "col-md-10 full-height"}, 
 				  React.createElement("div", {id: "situation", className: "row"}, 
 				  	React.createElement(SituationApp, {
-									step: this.state.situation.step, 
-									description: this.state.situation.description, 
-									systemTime: this.state.systemTime}
-								)
+						step: this.state.situation.step, 
+						description: this.state.situation.description, 
+						systemTime: this.state.systemTime}
+					)
 				  ), 
 				  React.createElement("div", {className: "row custom-content"}, 
 				    React.createElement("div", {id: "departList", className: "col-md-2"}, 
 				    	React.createElement(TreeMenu, {
+				    		onTreeNodeCheckChange: this._handleDynamicTreeNodePropChange.bind(this, "checked"), 
 				    		onTreeNodeCollapseChange: this._handleDynamicTreeNodePropChange.bind(this, "collapsed"), 
 				    		expandIconClass: "fa fa-chevron-right", 
-	        			collapseIconClass: "fa fa-chevron-down", 
+	        				collapseIconClass: "fa fa-chevron-down", 
 					    	data: this.state.treeData}
 				    	)
 				    ), 
@@ -22750,16 +22984,18 @@ var Top = React.createClass({displayName: "Top",
 				  )
 				), 
 				React.createElement("div", {className: "col-md-2 full-height chat"}, 
-				  React.createElement("div", {className: "row login-user"}), 
-				  React.createElement("div", {className: "row message-list"}), 
-				  React.createElement("div", {className: "row send-message"}, 
-				    React.createElement("div", {className: "input-group same-height"}, 
-				      React.createElement("input", {type: "text", className: "form-control"}), 
-				      	React.createElement("span", {className: "input-group-btn"}, 
-				        	React.createElement("button", {type: "button", className: "btn btn-success same-height"}, "送出")
-				        )
-				    )
-				  )
+					React.createElement(UserList, {
+		                users: this.state.users, 
+		                onChatTo: this.onChatTo}
+					), 
+					React.createElement(MessageList, {
+						messages: this.state.messages}
+	              	), 
+					React.createElement(MessageForm, {
+						onMessageSubmit: this.handleMessageSubmit, 
+						chatTo: this.state.chatTo, 
+						from: this.state.user.name}
+					)
 				)
 			)
 		);
@@ -22768,4 +23004,4 @@ var Top = React.createClass({displayName: "Top",
 
 module.exports = Top;
 
-},{"./Situation/SituationApp.jsx":248,"react":247,"react-tree-menu":113}]},{},[249]);
+},{"./Chatroom/ChatForm.jsx":248,"./Chatroom/ChatMsgLst.jsx":250,"./Chatroom/UserList.jsx":252,"./Situation/SituationApp.jsx":253,"react":247,"react-tree-menu":113}]},{},[254]);
