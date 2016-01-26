@@ -22714,6 +22714,23 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 module.exports = SituationApp;
 
 },{"react":247}],254:[function(require,module,exports){
+var React = require('react');
+
+var SysMsg = React.createClass({displayName: "SysMsg",
+  render() {
+      return (
+          React.createElement("div", null, 
+          	React.createElement("p", null, 
+          		this.props.text
+          	)
+          )
+      );
+  }
+});
+
+module.exports = SysMsg;  
+
+},{"react":247}],255:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -22723,7 +22740,7 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":255,"react":247,"react-dom":112}],255:[function(require,module,exports){
+},{"./top.jsx":256,"react":247,"react-dom":112}],256:[function(require,module,exports){
 var React = require("react");
 var SituationApp = require("./Situation/SituationApp.jsx");
 
@@ -22732,8 +22749,13 @@ var MessageList = require("./Chatroom/ChatMsgLst.jsx");
 var MessageForm = require("./Chatroom/ChatForm.jsx");
 var UserList = require("./Chatroom/UserList.jsx");
 
+//TreeSet
 var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
+
+//SysMsg
+var SysMsgs = require("./SysMessage/SysMessages.jsx");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
@@ -22746,6 +22768,7 @@ var Top = React.createClass({displayName: "Top",
 			user: {name:""},
 			users: ["all"],
 			messages: [],
+			sysMessages:[],
 			text: '',
 			chatTo: undefined,
 			departs:[],
@@ -22791,9 +22814,9 @@ var Top = React.createClass({displayName: "Top",
 		setTimeout(this._fakeChangeSituation, 10000);
 		this._initMaps();
 		socket.on("currentUsers", this._getCurrentUsers)
-	    socket.on('send:message', this._messageRecieve);
-	    socket.on('user:join', this._userJoined);
-	    socket.on('user:left', this._userLeft);
+	  socket.on('send:message', this._messageRecieve);
+	  socket.on('user:join', this._userJoined);
+	  socket.on('user:left', this._userLeft);
 	},
 
 	_formatDeparts: function(departs){
@@ -22916,25 +22939,36 @@ var Top = React.createClass({displayName: "Top",
       if(currentUsers.indexOf(username) > -1) {
         return;
       }
-      var currentMessages = this.state.messages;
-      currentUsers.push(username);
-      currentMessages.push({
-        from : "系統",
-        text : username +' 已加入'
+      // var currentMessages = this.state.messages;
+      // currentUsers.push(username);
+      // currentMessages.push({
+      //   from : "系統",
+      //   text : username +' 已加入'
+      // });
+      //this.setState({users: currentUsers, messages: currentMessages});
+      var currentSysMessages = this.state.sysMessages;
+      currentSysMessages.push({text: username + " 已加入系統"});
+      this.setState({
+      	sysMessages: currentSysMessages
       });
-      this.setState({users: currentUsers, messages: currentMessages});
   },
 
   _userLeft: function(username) {
-      var currentUsers = this.state.users;
-      var currentMessages = this.state.messages;
-      var index = currentUsers.indexOf(username);
-      currentUsers.splice(index, 1);
-      currentMessages.push({
-        from : "系統",
-        text : username +' 已離開'
+      // var currentUsers = this.state.users;
+      // var currentMessages = this.state.messages;
+      // var index = currentUsers.indexOf(username);
+      // currentUsers.splice(index, 1);
+      // currentMessages.push({
+      //   from : "系統",
+      //   text : username +' 已離開'
+      // });
+      // this.setState({users: currentUsers, messages: currentMessages});
+
+      var currentSysMessages = this.state.sysMessages;
+      currentSysMessages.push({text: username + " 已離開系統"});
+      this.setState({
+      	sysMessages: currentSysMessages
       });
-      this.setState({users: currentUsers, messages: currentMessages});
   },
 
   onChatTo: function(username){
@@ -22964,13 +22998,23 @@ var Top = React.createClass({displayName: "Top",
 				    		onTreeNodeCheckChange: this._handleDynamicTreeNodePropChange.bind(this, "checked"), 
 				    		onTreeNodeCollapseChange: this._handleDynamicTreeNodePropChange.bind(this, "collapsed"), 
 				    		expandIconClass: "fa fa-chevron-right", 
-	        				collapseIconClass: "fa fa-chevron-down", 
+	        			collapseIconClass: "fa fa-chevron-down", 
 					    	data: this.state.treeData}
 				    	)
 				    ), 
 				    React.createElement("div", {id: "wrapper", className: "col-md-10"}, 
 				      React.createElement("div", {id: "map", className: "map"}, "map"), 
-				      React.createElement("div", {id: "over_map"}, "overlay")
+				      React.createElement("div", {id: "over_map"}, 
+				      	this.state.sysMessages.map((message, i) => {
+                    return (
+                        React.createElement(SysMsgs, {
+                            key: i, 
+                            text: message.text}
+                        )
+                    	);
+               			})
+                  
+                )
 				    )
 				  ), 
 				  React.createElement("footer", {className: "footer"}, 
@@ -22978,7 +23022,9 @@ var Top = React.createClass({displayName: "Top",
 				      React.createElement("div", {className: "row"}, 
 				        React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
 				        React.createElement("div", {className: "col-md-9"}, "123"), 
-				        React.createElement("div", {className: "col-md-1"}, "person")
+				        React.createElement("div", {className: "col-md-1"}, 
+				        	React.createElement("img", {src: "../images/login.png"})
+				        )
 				      )
 				    )
 				  )
@@ -23004,4 +23050,4 @@ var Top = React.createClass({displayName: "Top",
 
 module.exports = Top;
 
-},{"./Chatroom/ChatForm.jsx":248,"./Chatroom/ChatMsgLst.jsx":250,"./Chatroom/UserList.jsx":252,"./Situation/SituationApp.jsx":253,"react":247,"react-tree-menu":113}]},{},[254]);
+},{"./Chatroom/ChatForm.jsx":248,"./Chatroom/ChatMsgLst.jsx":250,"./Chatroom/UserList.jsx":252,"./Situation/SituationApp.jsx":253,"./SysMessage/SysMessages.jsx":254,"react":247,"react-tree-menu":113}]},{},[255]);

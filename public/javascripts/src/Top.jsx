@@ -6,8 +6,13 @@ var MessageList = require("./Chatroom/ChatMsgLst.jsx");
 var MessageForm = require("./Chatroom/ChatForm.jsx");
 var UserList = require("./Chatroom/UserList.jsx");
 
+//TreeSet
 var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
+
+//SysMsg
+var SysMsgs = require("./SysMessage/SysMessages.jsx");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
@@ -20,6 +25,7 @@ var Top = React.createClass({
 			user: {name:""},
 			users: ["all"],
 			messages: [],
+			sysMessages:[],
 			text: '',
 			chatTo: undefined,
 			departs:[],
@@ -65,9 +71,9 @@ var Top = React.createClass({
 		setTimeout(this._fakeChangeSituation, 10000);
 		this._initMaps();
 		socket.on("currentUsers", this._getCurrentUsers)
-	    socket.on('send:message', this._messageRecieve);
-	    socket.on('user:join', this._userJoined);
-	    socket.on('user:left', this._userLeft);
+	  socket.on('send:message', this._messageRecieve);
+	  socket.on('user:join', this._userJoined);
+	  socket.on('user:left', this._userLeft);
 	},
 
 	_formatDeparts: function(departs){
@@ -190,25 +196,36 @@ var Top = React.createClass({
       if(currentUsers.indexOf(username) > -1) {
         return;
       }
-      var currentMessages = this.state.messages;
-      currentUsers.push(username);
-      currentMessages.push({
-        from : "系統",
-        text : username +' 已加入'
+      // var currentMessages = this.state.messages;
+      // currentUsers.push(username);
+      // currentMessages.push({
+      //   from : "系統",
+      //   text : username +' 已加入'
+      // });
+      //this.setState({users: currentUsers, messages: currentMessages});
+      var currentSysMessages = this.state.sysMessages;
+      currentSysMessages.push({text: username + " 已加入系統"});
+      this.setState({
+      	sysMessages: currentSysMessages
       });
-      this.setState({users: currentUsers, messages: currentMessages});
   },
 
   _userLeft: function(username) {
-      var currentUsers = this.state.users;
-      var currentMessages = this.state.messages;
-      var index = currentUsers.indexOf(username);
-      currentUsers.splice(index, 1);
-      currentMessages.push({
-        from : "系統",
-        text : username +' 已離開'
+      // var currentUsers = this.state.users;
+      // var currentMessages = this.state.messages;
+      // var index = currentUsers.indexOf(username);
+      // currentUsers.splice(index, 1);
+      // currentMessages.push({
+      //   from : "系統",
+      //   text : username +' 已離開'
+      // });
+      // this.setState({users: currentUsers, messages: currentMessages});
+
+      var currentSysMessages = this.state.sysMessages;
+      currentSysMessages.push({text: username + " 已離開系統"});
+      this.setState({
+      	sysMessages: currentSysMessages
       });
-      this.setState({users: currentUsers, messages: currentMessages});
   },
 
   onChatTo: function(username){
@@ -238,13 +255,23 @@ var Top = React.createClass({
 				    		onTreeNodeCheckChange={this._handleDynamicTreeNodePropChange.bind(this, "checked")} 
 				    		onTreeNodeCollapseChange={this._handleDynamicTreeNodePropChange.bind(this, "collapsed")}
 				    		expandIconClass="fa fa-chevron-right"
-	        				collapseIconClass="fa fa-chevron-down"
+	        			collapseIconClass="fa fa-chevron-down"
 					    	data={this.state.treeData} 
 				    	/>
 				    </div>
 				    <div id="wrapper" className="col-md-10">
 				      <div id="map" className="map">map</div>
-				      <div id="over_map">overlay</div>
+				      <div id="over_map">{
+				      	this.state.sysMessages.map((message, i) => {
+                    return (
+                        <SysMsgs
+                            key={i}
+                            text={message.text}
+                        />
+                    	);
+               			})
+                  }
+                </div>
 				    </div>
 				  </div>
 				  <footer className="footer">
@@ -252,7 +279,9 @@ var Top = React.createClass({
 				      <div className="row">
 				        <div id="eagleMap" className="col-md-2 eagle-map"></div>
 				        <div className="col-md-9">123</div>
-				        <div className="col-md-1">person</div>
+				        <div className="col-md-1">
+				        	<img src="../images/login.png" />
+				        </div>
 				      </div>
 				    </div>
 				  </footer>
