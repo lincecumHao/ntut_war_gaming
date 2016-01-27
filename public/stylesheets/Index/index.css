@@ -158,3 +158,15 @@ div.col-md-2 {
     word-break: break-word;
     background: gray;
 }
+
+.over_map_processbar {
+    position: absolute;
+    z-index: 99;
+    width: 120px;
+    border: 3px solid #ebebeb;
+    display: block;
+}
+
+.progressbar-container{
+    background: green;
+}

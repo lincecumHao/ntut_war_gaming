@@ -13,9 +13,13 @@ var TreeMenuUtils = require('react-tree-menu').Utils;
 //SysMsg
 var SysMsgs = require("./SysMessage/SysMessages.jsx");
 
+//ProgressBar
+var ProgressBar = require("./Progressbar.jsx");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
+var _overlay;
 var _eagleMapDefaultZoom = 12;
 
 var Top = React.createClass({
@@ -34,7 +38,8 @@ var Top = React.createClass({
 				step: "",
 				description: ""
 			},
-			systemTime: ""
+			systemTime: "",
+			progressRate: 100
 		};
 	},
 
@@ -50,7 +55,8 @@ var Top = React.createClass({
 		//update system time per second.
 		setInterval(function(){ 
 			this.setState({
-				systemTime: this._getFormatedSystemTime()
+				systemTime: this._getFormatedSystemTime(),
+				progressRate: (this.state.progressRate == 0 ? 100 : this.state.progressRate - 10)
 			}); 
 		}.bind(this), 1000);
 
@@ -124,11 +130,29 @@ var Top = React.createClass({
 	        },
 	        zoom: 15
 		};
-		
-		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
-		_mainMap.addListener("center_changed", function() {
+
+    _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+    var marker = new google.maps.Marker({
+      map: _mainMap,
+      draggable: false,
+      position: _mainMap.getCenter()
+    });
+
+    //only for call fromLatLngToContainerPixel, ugly indeed
+    _overlay = new google.maps.OverlayView();
+    _overlay.draw = function() {};
+    _overlay.setMap(_mainMap);
+
+    _mainMap.addListener("center_changed", function(e) {
 			_eagleMap.setCenter(_mainMap.getCenter());   
-			this._checkBounds();  
+			this._checkBounds();
+
+			var point2 = _overlay.getProjection().fromLatLngToContainerPixel(marker.getPosition());
+			var info = document.getElementById("myinfo");
+			info.style.left = (point2.x - 60) + 'px';
+      info.style.top = (point2.y - 55) + 'px';
+
 		}.bind(this));
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
@@ -177,8 +201,7 @@ var Top = React.createClass({
 	},
 
   _getCurrentUsers: function(data){
-  	console.log(data);
-    if(data){
+  	if(data){
         this.setState({
         users: this.state.users.concat(data) 
       });
@@ -196,13 +219,6 @@ var Top = React.createClass({
       if(currentUsers.indexOf(username) > -1) {
         return;
       }
-      // var currentMessages = this.state.messages;
-      // currentUsers.push(username);
-      // currentMessages.push({
-      //   from : "系統",
-      //   text : username +' 已加入'
-      // });
-      //this.setState({users: currentUsers, messages: currentMessages});
       var currentSysMessages = this.state.sysMessages;
       currentSysMessages.push({text: username + " 已加入系統"});
       this.setState({
@@ -211,16 +227,6 @@ var Top = React.createClass({
   },
 
   _userLeft: function(username) {
-      // var currentUsers = this.state.users;
-      // var currentMessages = this.state.messages;
-      // var index = currentUsers.indexOf(username);
-      // currentUsers.splice(index, 1);
-      // currentMessages.push({
-      //   from : "系統",
-      //   text : username +' 已離開'
-      // });
-      // this.setState({users: currentUsers, messages: currentMessages});
-
       var currentSysMessages = this.state.sysMessages;
       currentSysMessages.push({text: username + " 已離開系統"});
       this.setState({
@@ -239,6 +245,9 @@ var Top = React.createClass({
   },
 
 	render: function() {
+		var divStyle = {
+			width: "10%"
+		};
 		return (
 			<div className="row full-height">
 				<div id="situation_wrapper" className="col-md-10 full-height">
@@ -261,6 +270,9 @@ var Top = React.createClass({
 				    </div>
 				    <div id="wrapper" className="col-md-10">
 				      <div id="map" className="map">map</div>
+				      <div id="myinfo" className="over_map_processbar">
+							  <ProgressBar completed={this.state.progressRate} color={"red"}/>
+							</div>
 				      <div id="over_map">{
 				      	this.state.sysMessages.map((message, i) => {
                     return (
@@ -278,7 +290,9 @@ var Top = React.createClass({
 				    <div className="container-fluid">
 				      <div className="row">
 				        <div id="eagleMap" className="col-md-2 eagle-map"></div>
-				        <div className="col-md-9">123</div>
+				        <div className="col-md-9">
+				        	resource
+				        </div>
 				        <div className="col-md-1">
 				        	<img src="../images/login.png" />
 				        </div>

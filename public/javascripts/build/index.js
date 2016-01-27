@@ -22697,6 +22697,34 @@ module.exports = UsersList;
 },{"./User.jsx":251,"react":247}],253:[function(require,module,exports){
 var React = require('react');
 
+var component = React.createClass({displayName: "component",
+
+  render: function() {
+
+    var completed = +this.props.completed;
+    if (completed < 0) {completed = 0};
+    if (completed > 100) {completed = 100};
+
+    var style = {
+      backgroundColor: this.props.color || '#0BD318',
+      width: completed + '%',
+      transition: "width 200ms",
+      height: this.props.height || 10
+    };
+
+    return (
+      React.createElement("div", {className: "progressbar-container"}, 
+        React.createElement("div", {className: "progressbar-progress", style: style}, this.props.children)
+      )
+    );
+  }
+});
+
+module.exports = component;
+
+},{"react":247}],254:[function(require,module,exports){
+var React = require('react');
+
 var SituationApp = React.createClass({displayName: "SituationApp",
 
 	render: function() {
@@ -22713,7 +22741,7 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 
 module.exports = SituationApp;
 
-},{"react":247}],254:[function(require,module,exports){
+},{"react":247}],255:[function(require,module,exports){
 var React = require('react');
 
 var SysMsg = React.createClass({displayName: "SysMsg",
@@ -22730,7 +22758,7 @@ var SysMsg = React.createClass({displayName: "SysMsg",
 
 module.exports = SysMsg;  
 
-},{"react":247}],255:[function(require,module,exports){
+},{"react":247}],256:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -22740,7 +22768,7 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":256,"react":247,"react-dom":112}],256:[function(require,module,exports){
+},{"./top.jsx":257,"react":247,"react-dom":112}],257:[function(require,module,exports){
 var React = require("react");
 var SituationApp = require("./Situation/SituationApp.jsx");
 
@@ -22756,9 +22784,13 @@ var TreeMenuUtils = require('react-tree-menu').Utils;
 //SysMsg
 var SysMsgs = require("./SysMessage/SysMessages.jsx");
 
+//ProgressBar
+var ProgressBar = require("./Progressbar.jsx");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
+var _overlay;
 var _eagleMapDefaultZoom = 12;
 
 var Top = React.createClass({displayName: "Top",
@@ -22777,7 +22809,8 @@ var Top = React.createClass({displayName: "Top",
 				step: "",
 				description: ""
 			},
-			systemTime: ""
+			systemTime: "",
+			progressRate: 100
 		};
 	},
 
@@ -22793,7 +22826,8 @@ var Top = React.createClass({displayName: "Top",
 		//update system time per second.
 		setInterval(function(){ 
 			this.setState({
-				systemTime: this._getFormatedSystemTime()
+				systemTime: this._getFormatedSystemTime(),
+				progressRate: (this.state.progressRate == 0 ? 100 : this.state.progressRate - 10)
 			}); 
 		}.bind(this), 1000);
 
@@ -22867,11 +22901,29 @@ var Top = React.createClass({displayName: "Top",
 	        },
 	        zoom: 15
 		};
-		
-		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
-		_mainMap.addListener("center_changed", function() {
+
+    _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
+
+    var marker = new google.maps.Marker({
+      map: _mainMap,
+      draggable: false,
+      position: _mainMap.getCenter()
+    });
+
+    //only for call fromLatLngToContainerPixel, ugly indeed
+    _overlay = new google.maps.OverlayView();
+    _overlay.draw = function() {};
+    _overlay.setMap(_mainMap);
+
+    _mainMap.addListener("center_changed", function(e) {
 			_eagleMap.setCenter(_mainMap.getCenter());   
-			this._checkBounds();  
+			this._checkBounds();
+
+			var point2 = _overlay.getProjection().fromLatLngToContainerPixel(marker.getPosition());
+			var info = document.getElementById("myinfo");
+			info.style.left = (point2.x - 60) + 'px';
+      info.style.top = (point2.y - 55) + 'px';
+
 		}.bind(this));
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
@@ -22920,8 +22972,7 @@ var Top = React.createClass({displayName: "Top",
 	},
 
   _getCurrentUsers: function(data){
-  	console.log(data);
-    if(data){
+  	if(data){
         this.setState({
         users: this.state.users.concat(data) 
       });
@@ -22939,13 +22990,6 @@ var Top = React.createClass({displayName: "Top",
       if(currentUsers.indexOf(username) > -1) {
         return;
       }
-      // var currentMessages = this.state.messages;
-      // currentUsers.push(username);
-      // currentMessages.push({
-      //   from : "系統",
-      //   text : username +' 已加入'
-      // });
-      //this.setState({users: currentUsers, messages: currentMessages});
       var currentSysMessages = this.state.sysMessages;
       currentSysMessages.push({text: username + " 已加入系統"});
       this.setState({
@@ -22954,16 +22998,6 @@ var Top = React.createClass({displayName: "Top",
   },
 
   _userLeft: function(username) {
-      // var currentUsers = this.state.users;
-      // var currentMessages = this.state.messages;
-      // var index = currentUsers.indexOf(username);
-      // currentUsers.splice(index, 1);
-      // currentMessages.push({
-      //   from : "系統",
-      //   text : username +' 已離開'
-      // });
-      // this.setState({users: currentUsers, messages: currentMessages});
-
       var currentSysMessages = this.state.sysMessages;
       currentSysMessages.push({text: username + " 已離開系統"});
       this.setState({
@@ -22982,6 +23016,9 @@ var Top = React.createClass({displayName: "Top",
   },
 
 	render: function() {
+		var divStyle = {
+			width: "10%"
+		};
 		return (
 			React.createElement("div", {className: "row full-height"}, 
 				React.createElement("div", {id: "situation_wrapper", className: "col-md-10 full-height"}, 
@@ -23004,6 +23041,9 @@ var Top = React.createClass({displayName: "Top",
 				    ), 
 				    React.createElement("div", {id: "wrapper", className: "col-md-10"}, 
 				      React.createElement("div", {id: "map", className: "map"}, "map"), 
+				      React.createElement("div", {id: "myinfo", className: "over_map_processbar"}, 
+							  React.createElement(ProgressBar, {completed: this.state.progressRate, color: "red"})
+							), 
 				      React.createElement("div", {id: "over_map"}, 
 				      	this.state.sysMessages.map((message, i) => {
                     return (
@@ -23021,7 +23061,9 @@ var Top = React.createClass({displayName: "Top",
 				    React.createElement("div", {className: "container-fluid"}, 
 				      React.createElement("div", {className: "row"}, 
 				        React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
-				        React.createElement("div", {className: "col-md-9"}, "123"), 
+				        React.createElement("div", {className: "col-md-9"}, 
+				        	"resource"
+				        ), 
 				        React.createElement("div", {className: "col-md-1"}, 
 				        	React.createElement("img", {src: "../images/login.png"})
 				        )
@@ -23050,4 +23092,4 @@ var Top = React.createClass({displayName: "Top",
 
 module.exports = Top;
 
-},{"./Chatroom/ChatForm.jsx":248,"./Chatroom/ChatMsgLst.jsx":250,"./Chatroom/UserList.jsx":252,"./Situation/SituationApp.jsx":253,"./SysMessage/SysMessages.jsx":254,"react":247,"react-tree-menu":113}]},{},[255]);
+},{"./Chatroom/ChatForm.jsx":248,"./Chatroom/ChatMsgLst.jsx":250,"./Chatroom/UserList.jsx":252,"./Progressbar.jsx":253,"./Situation/SituationApp.jsx":254,"./SysMessage/SysMessages.jsx":255,"react":247,"react-tree-menu":113}]},{},[256]);
