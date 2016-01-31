@@ -22793,6 +22793,11 @@ var _eagleMap;
 var _overlay;
 var _eagleMapDefaultZoom = 12;
 
+//remind what is next depart, for avoid geolocate out of query limit
+var _nextDepart = 0;
+var delay = 100;
+var departsWithDuration = [];
+
 var Top = React.createClass({displayName: "Top",
 
 	getInitialState: function() {
@@ -22810,7 +22815,9 @@ var Top = React.createClass({displayName: "Top",
 				description: ""
 			},
 			systemTime: "",
-			progressRate: 100
+			progressRate: 100,
+			disasterMarker: null,
+			processBarStyle: {}
 		};
 	},
 
@@ -22845,7 +22852,7 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	componentDidMount: function() {
-		setTimeout(this._fakeChangeSituation, 10000);
+		setTimeout(this._after10Seconds, 10000);
 		this._initMaps();
 		socket.on("currentUsers", this._getCurrentUsers)
 	  socket.on('send:message', this._messageRecieve);
@@ -22854,6 +22861,7 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_formatDeparts: function(departs){
+		
 		var formatedAry = [];
 		formatedAry.push(this._toTreeFormat(departs[0]));
 
@@ -22867,7 +22875,9 @@ var Top = React.createClass({displayName: "Top",
 	_add2Parent: function(depart, array){
 		for(var i = 0; i < array.length; i++){
 			var parent = array[i];
-			if(depart.parent == parent.label){
+			//avoid parent name has duration time.
+			var parentName = parent.label.split(" ")[0];
+			if(depart.parent == parentName){
 				array[i].children.push(this._toTreeFormat(depart));
 				return array;
 			}else if(parent.children.length > 0){
@@ -22903,6 +22913,7 @@ var Top = React.createClass({displayName: "Top",
 		};
 
     _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
+    console.log(_mainMap);
 
     var marker = new google.maps.Marker({
       map: _mainMap,
@@ -22919,11 +22930,19 @@ var Top = React.createClass({displayName: "Top",
 			_eagleMap.setCenter(_mainMap.getCenter());   
 			this._checkBounds();
 
-			var point2 = _overlay.getProjection().fromLatLngToContainerPixel(marker.getPosition());
-			var info = document.getElementById("myinfo");
-			info.style.left = (point2.x - 60) + 'px';
-      info.style.top = (point2.y - 55) + 'px';
-
+			if(this.state.disasterMarker != null){
+				var point2 = _overlay.getProjection().fromLatLngToContainerPixel(this.state.disasterMarker.getPosition());
+				var info = document.getElementById("processBar");
+				this.setState({
+					processBarStyle:{
+						left: (point2.x - 50) + "px",
+						top: (point2.y - 70) + "px",
+						display: "block"
+					} 
+				});
+				// info.style.left = (point2.x - 50) + 'px';
+	   //    info.style.top = (point2.y - 50) + 'px';
+			}
 		}.bind(this));
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
@@ -22958,13 +22977,71 @@ var Top = React.createClass({displayName: "Top",
 		return date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
 	},
 	
-	_fakeChangeSituation: function(){
+	_after10Seconds: function(){
+		//create a random disaster marker and set gif icon.
+		var randomLat = this._getRandomArbitrary(25.025246, 25.068014);
+		var randomLng = this._getRandomArbitrary(121.509532, 121.564464);
+		var randomCoordinate = new google.maps.LatLng(randomLat, randomLng);
+		var marker = new google.maps.Marker({
+      map: _mainMap,
+      draggable: false,
+      position: randomCoordinate,
+      optimized:false,
+     	icon: {
+     		url: "./images/Fire_gif_50.gif",
+     		size: new google.maps.Size(50, 50)
+     	}
+    });
+
+		//change situation
 		this.setState({
 			situation:{
 				step: "災害應變階段",
 				description: "現在溫刀火燒厝，請依指示進行處理"
-			} 
+			},
+			disasterMarker: marker 
 		});
+
+    _mainMap.panTo(marker.position);
+    _mainMap.setZoom(18);
+    this._onDisasterHappen();
+	},
+
+	_onDisasterHappen: function(){
+		this._getDurationTime(0, 100);
+	},
+
+	_getDurationTime: function(current, delay){
+		var depart = this.state.departs[current];
+		var directionsService = new google.maps.DirectionsService;
+		directionsService.route({
+	    origin: depart.address,
+	    destination: this.state.disasterMarker.getPosition(),
+	    optimizeWaypoints: true,
+	    travelMode: google.maps.TravelMode.DRIVING
+	  }, function(response, status) {
+	  	if(status == google.maps.GeocoderStatus.OK){
+	  		var duration = response.routes[0].legs[0].duration.text;
+	  		depart.name = depart.name + " (" + duration + ")";
+	  		departsWithDuration.push(depart);
+	  		current++
+	  		if(current < this.state.departs.length){
+					this._getDurationTime(current, 100);
+				}else if(current == this.state.departs.length){
+					this.setState({
+		  			departs: departsWithDuration,
+		  			treeData: this._formatDeparts(departsWithDuration)
+			  	});
+				}
+	  	}else{
+	  		if(status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
+	  			setTimeout(function(){this._getDurationTime(current)}.bind(this), delay++);
+	  		}else{
+	  			departsWithDuration.push(depart);
+	  		}
+	  	}
+	  	// next();
+	  }.bind(this));
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
@@ -23005,6 +23082,10 @@ var Top = React.createClass({displayName: "Top",
       });
   },
 
+  _getRandomArbitrary: function(min, max) {
+    return Math.random() * (max - min) + min;
+	},
+
   onChatTo: function(username){
     this.setState({
       chatTo: (username == "all" ? undefined : username) 
@@ -23016,9 +23097,6 @@ var Top = React.createClass({displayName: "Top",
   },
 
 	render: function() {
-		var divStyle = {
-			width: "10%"
-		};
 		return (
 			React.createElement("div", {className: "row full-height"}, 
 				React.createElement("div", {id: "situation_wrapper", className: "col-md-10 full-height"}, 
@@ -23041,7 +23119,7 @@ var Top = React.createClass({displayName: "Top",
 				    ), 
 				    React.createElement("div", {id: "wrapper", className: "col-md-10"}, 
 				      React.createElement("div", {id: "map", className: "map"}, "map"), 
-				      React.createElement("div", {id: "myinfo", className: "over_map_processbar"}, 
+				      React.createElement("div", {id: "processBar", style: this.state.processBarStyle, className: "over_map_processbar"}, 
 							  React.createElement(ProgressBar, {completed: this.state.progressRate, color: "red"})
 							), 
 				      React.createElement("div", {id: "over_map"}, 
