@@ -23516,16 +23516,15 @@ var Top = React.createClass({displayName: "Top",
     _overlay.setMap(_mainMap);
 
     var eagleRectangle = new google.maps.Rectangle({
-    strokeColor: '#FF0000',
-    strokeOpacity: 1,
-    strokeWeight: 2,
-    bounds: _mainMap.getBounds()
-  });
+	    strokeColor: '#FF0000',
+	    strokeOpacity: 1,
+	    strokeWeight: 2,
+	    bounds: _mainMap.getBounds()
+  	});
 
     _mainMap.addListener("center_changed", function(e) {
 			//_eagleMap.setCenter(_mainMap.getCenter());   
 			this._checkBounds();
-			eagleRectangle.setBounds(_mainMap.getBounds());
 			if(this.state.disasterMarker != null){
 				var point2 = _overlay.getProjection().fromLatLngToContainerPixel(this.state.disasterMarker.getPosition());
 				var info = document.getElementById("processBar");
@@ -23537,6 +23536,7 @@ var Top = React.createClass({displayName: "Top",
 					} 
 				});
 			}
+			eagleRectangle.setBounds(_mainMap.getBounds());
 		}.bind(this));
 
     // Limit the zoom level
@@ -23547,10 +23547,11 @@ var Top = React.createClass({displayName: "Top",
 		
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
-		eagleRectangle.setMap(_eagleMap);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
 		_eagleMap.set("scrollwheel", false);
-		_eagleMap.set("draggable", false)
+		_eagleMap.set("draggable", false);
+		eagleRectangle.setMap(_eagleMap);
+
 	},
 
 	_checkBounds: function(){
@@ -23632,7 +23633,7 @@ var Top = React.createClass({displayName: "Top",
 	    map: _eagleMap,
 	    draggable: false,
 	  });
-
+	  google.maps.event.trigger(_mainMap, "center_changed");
     this._onDisasterHappen();
 	},
 
@@ -23771,7 +23772,6 @@ var Top = React.createClass({displayName: "Top",
 				    React.createElement("div", {className: "container-fluid"}, 
 				      React.createElement("div", {className: "row"}, 
 				        React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
-				        React.createElement("div", {id: "over_map"}), 
 				        React.createElement("div", {className: "col-md-9"}, 
 				        	"resource"
 				        ), 
