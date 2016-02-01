@@ -254,22 +254,23 @@ var Top = React.createClass({
 	      scale: 0, //tamaño 0
 	    },
 	    map: _eagleMap,
-	    draggable: true,
+	    draggable: false,
 	    labelAnchor: new google.maps.Point(25, 25),
 	    labelClass: "spinner",
 	  });
 	  
-	  // var label = new MarkerWithLabel({
-	  //   position: randomCoordinate,
-	  //   icon: {
-	  //     path: google.maps.SymbolPath.CIRCLE,
-	  //     scale: 0, //tamaño 0
-	  //   },
-	  //   map: _eagleMap,
-	  //   draggable: true,
-	  //   labelAnchor: new google.maps.Point(5, 5),
-	  //   labelClass: "label",
-	  // });
+	  var label = new MarkerWithLabel({
+	    position: randomCoordinate,
+	    icon: {
+	      path: google.maps.SymbolPath.CIRCLE,
+	      strokeColor: 'red',
+	      fillColor : 'red',
+	      fillOpacity: 1,
+	      scale: 3, //tamaño 0
+	    },
+	    map: _eagleMap,
+	    draggable: false,
+	  });
 
     this._onDisasterHappen();
 	},

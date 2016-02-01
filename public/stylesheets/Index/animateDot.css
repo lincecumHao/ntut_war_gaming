@@ -3,7 +3,7 @@
     background: red;
     height: 10px;
     width: 10px;
-    border-radius: 10px;
+    border-radius: 5px;
     -webkit-animation: pulse 1s ease 1s 3;
     -moz-animation: pulse 1s ease 1s 3;
     animation: pulse 1s ease 1s 3;
