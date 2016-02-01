@@ -16,11 +16,15 @@ var SysMsgs = require("./SysMessage/SysMessages.jsx");
 //ProgressBar
 var ProgressBar = require("./Progressbar.jsx");
 
+//MarkerWithLabel
+var MarkerWithLabel = require('markerwithlabel');
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
 var _overlay;
 var _eagleMapDefaultZoom = 10;
+
 
 //remind what is next depart, for avoid geolocate out of query limit
 var _nextDepart = 0;
@@ -241,6 +245,32 @@ var Top = React.createClass({
 
     _mainMap.panTo(marker.position);
     _mainMap.setZoom(18);
+
+    //add a spin and a label on _eagleMap
+    var spin = new MarkerWithLabel({
+	    position: randomCoordinate,
+	    icon: {
+	      path: google.maps.SymbolPath.CIRCLE,
+	      scale: 0, //tamaño 0
+	    },
+	    map: _eagleMap,
+	    draggable: true,
+	    labelAnchor: new google.maps.Point(25, 25),
+	    labelClass: "spinner",
+	  });
+	  
+	  // var label = new MarkerWithLabel({
+	  //   position: randomCoordinate,
+	  //   icon: {
+	  //     path: google.maps.SymbolPath.CIRCLE,
+	  //     scale: 0, //tamaño 0
+	  //   },
+	  //   map: _eagleMap,
+	  //   draggable: true,
+	  //   labelAnchor: new google.maps.Point(5, 5),
+	  //   labelClass: "label",
+	  // });
+
     this._onDisasterHappen();
 	},
 
