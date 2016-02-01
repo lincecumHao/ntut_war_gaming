@@ -22791,7 +22791,7 @@ var socket = io();
 var _mainMap;
 var _eagleMap;
 var _overlay;
-var _eagleMapDefaultZoom = 12;
+var _eagleMapDefaultZoom = 10;
 
 //remind what is next depart, for avoid geolocate out of query limit
 var _nextDepart = 0;
@@ -22904,32 +22904,34 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_initMaps: function(){
+		var minZoomLevel = 13;
 		var mapOptions = {
 			center: {
 	            lat: 25.048644, 
 	            lng: 121.533715
 	        },
-	        zoom: 15
+	        zoom: minZoomLevel
 		};
 
     _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
     console.log(_mainMap);
-
-    var marker = new google.maps.Marker({
-      map: _mainMap,
-      draggable: false,
-      position: _mainMap.getCenter()
-    });
 
     //only for call fromLatLngToContainerPixel, ugly indeed
     _overlay = new google.maps.OverlayView();
     _overlay.draw = function() {};
     _overlay.setMap(_mainMap);
 
-    _mainMap.addListener("center_changed", function(e) {
-			_eagleMap.setCenter(_mainMap.getCenter());   
-			this._checkBounds();
+    var eagleRectangle = new google.maps.Rectangle({
+    strokeColor: '#FF0000',
+    strokeOpacity: 1,
+    strokeWeight: 2,
+    bounds: _mainMap.getBounds()
+  });
 
+    _mainMap.addListener("center_changed", function(e) {
+			//_eagleMap.setCenter(_mainMap.getCenter());   
+			this._checkBounds();
+			eagleRectangle.setBounds(_mainMap.getBounds());
 			if(this.state.disasterMarker != null){
 				var point2 = _overlay.getProjection().fromLatLngToContainerPixel(this.state.disasterMarker.getPosition());
 				var info = document.getElementById("processBar");
@@ -22940,12 +22942,18 @@ var Top = React.createClass({displayName: "Top",
 						display: "block"
 					} 
 				});
-				// info.style.left = (point2.x - 50) + 'px';
-	   //    info.style.top = (point2.y - 50) + 'px';
 			}
 		}.bind(this));
 
+    // Limit the zoom level
+		_mainMap.addListener("zoom_changed", function(e){
+			if (_mainMap.getZoom() < minZoomLevel) _mainMap.setZoom(minZoomLevel);
+		});
+
+		
+
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
+		eagleRectangle.setMap(_eagleMap);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
 		_eagleMap.set("scrollwheel", false);
 		_eagleMap.set("draggable", false)
@@ -22970,7 +22978,7 @@ var Top = React.createClass({displayName: "Top",
 
 			_mainMap.setCenter(new google.maps.LatLng(Y,X));
 		}
-    },
+  },
 
 	_getFormatedSystemTime: function(){
 		var date = new Date();
@@ -23045,6 +23053,9 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
+		//console.log(this.state.treeData);
+		//console.log(lineage);
+		//temp1[index[0]].children[index[1]].children[index[2]]
 		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
 	},
 
@@ -23139,6 +23150,7 @@ var Top = React.createClass({displayName: "Top",
 				    React.createElement("div", {className: "container-fluid"}, 
 				      React.createElement("div", {className: "row"}, 
 				        React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
+				        React.createElement("div", {id: "over_map"}), 
 				        React.createElement("div", {className: "col-md-9"}, 
 				        	"resource"
 				        ), 
