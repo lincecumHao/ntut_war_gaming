@@ -36,9 +36,6 @@ var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
 
-//previos select tree node
-var prevLineage = [];
-
 var Top = React.createClass({
 
 	getInitialState: function() {
@@ -184,6 +181,7 @@ var Top = React.createClass({
 	_toTreeFormat: function(depart) {
 		return{
 			checkbox : (depart.level > 0 ? true : false), 
+			isRadio: true,
 			id: depart._id,
 			label: depart.name,
 			children: []
@@ -237,8 +235,6 @@ var Top = React.createClass({
 		_mainMap.addListener("zoom_changed", function(e){
 			if (_mainMap.getZoom() < minZoomLevel) _mainMap.setZoom(minZoomLevel);
 		});
-
-		
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
@@ -369,21 +365,6 @@ var Top = React.createClass({
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-		var flag = true;
-		for (var i = 0; i < lineage.length; i++) {
-	    if (lineage[i] !== prevLineage[i]) {
-	    	flag = false;
-	    }
-	  }
-
-	  //close previos select tree node
-	  if(!flag){
-	  	console.log("reset");
-	  	console.log(prevLineage);
-	  	this.setState(TreeMenuUtils.getNewTreeState(prevLineage, this.state.treeData, "unchecked"));
-	  	prevLineage = lineage;
-	  }
-
 		var selectedDepart = this.state.treeData;
 		for(var level = 0; level < lineage.length; level++){
 			var index = lineage[level];

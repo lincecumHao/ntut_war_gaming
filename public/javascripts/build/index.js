@@ -5186,6 +5186,7 @@ var TreeNode = React.createClass({displayName: "TreeNode",
 
     stateful: React.PropTypes.bool,
     checkbox: React.PropTypes.bool,
+    isRadio: React.PropTypes.bool,
     collapsible : React.PropTypes.bool,
     collapsed : React.PropTypes.bool,
     expandIconClass: React.PropTypes.string,
@@ -5228,11 +5229,12 @@ var TreeNode = React.createClass({displayName: "TreeNode",
       labelFactory: function (labelClassName, displayLabel) {
         return React.createElement("label", {className: labelClassName}, displayLabel);
       },
-      checkboxFactory: function (className, isChecked) {
+      checkboxFactory: function (className, isChecked, isRadio) {
+        var type = (isRadio ? "radio" : "checkbox")
         return (
           React.createElement("input", {
           className: className, 
-          type: "checkbox", 
+          type: type, 
           checked: isChecked, 
           onChange: noop}));
       }
@@ -5335,7 +5337,7 @@ var TreeNode = React.createClass({displayName: "TreeNode",
     var props = this.props;
     if (!props.checkbox) return null;
 
-    return this.props.checkboxFactory(props.classNamePrefix + "-node-checkbox", this._isChecked(), this._getLineage());
+    return this.props.checkboxFactory(props.classNamePrefix + "-node-checkbox", this._isChecked(), this._isRadio(), this._getLineage() );
   },
 
   _isStateful: function () {
@@ -5348,6 +5350,13 @@ var TreeNode = React.createClass({displayName: "TreeNode",
 
     if (this._isStateful() && typeof this.state.checked !== "undefined") return this.state.checked;
     return this.props.checked;
+
+  },
+
+   _isRadio: function () {
+
+    if (this._isStateful() && typeof this.state.isRadio !== "undefined") return this.state.isRadio;
+    return this.props.isRadio;
 
   },
 
@@ -23463,9 +23472,6 @@ var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
 
-//previos select tree node
-var prevLineage = [];
-
 var Top = React.createClass({displayName: "Top",
 
 	getInitialState: function() {
@@ -23611,6 +23617,7 @@ var Top = React.createClass({displayName: "Top",
 	_toTreeFormat: function(depart) {
 		return{
 			checkbox : (depart.level > 0 ? true : false), 
+			isRadio: true,
 			id: depart._id,
 			label: depart.name,
 			children: []
@@ -23664,8 +23671,6 @@ var Top = React.createClass({displayName: "Top",
 		_mainMap.addListener("zoom_changed", function(e){
 			if (_mainMap.getZoom() < minZoomLevel) _mainMap.setZoom(minZoomLevel);
 		});
-
-		
 
 		_eagleMap = new google.maps.Map(document.getElementById('eagleMap'), mapOptions);
 		_eagleMap.setZoom(_eagleMapDefaultZoom);
@@ -23796,21 +23801,6 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-		var flag = true;
-		for (var i = 0; i < lineage.length; i++) {
-	    if (lineage[i] !== prevLineage[i]) {
-	    	flag = false;
-	    }
-	  }
-
-	  //close previos select tree node
-	  if(!flag){
-	  	console.log("reset");
-	  	console.log(prevLineage);
-	  	this.setState(TreeMenuUtils.getNewTreeState(prevLineage, this.state.treeData, "unchecked"));
-	  	prevLineage = lineage;
-	  }
-
 		var selectedDepart = this.state.treeData;
 		for(var level = 0; level < lineage.length; level++){
 			var index = lineage[level];
