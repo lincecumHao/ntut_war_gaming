@@ -26,7 +26,6 @@ router.post('/login', function(req, res) {
         } else {
             var user = users[0];
             if(user.username == "admin"){
-                console.log("admin login");
                 sess.user = user;
                 res.json({
                         status: 1

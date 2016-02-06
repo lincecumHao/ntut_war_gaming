@@ -19,6 +19,11 @@ var ProgressBar = require("./Progressbar.jsx");
 //MarkerWithLabel
 var MarkerWithLabel = require('markerwithlabel');
 
+//Resource
+var Resource = require("./Resource/Resource.jsx");
+
+var MapsUtil = require("./RefactorTest.js");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
@@ -30,6 +35,9 @@ var _eagleMapDefaultZoom = 10;
 var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
+
+//previos select tree node
+var prevLineage = [];
 
 var Top = React.createClass({
 
@@ -50,7 +58,11 @@ var Top = React.createClass({
 			systemTime: "",
 			progressRate: 100,
 			disasterMarker: null,
-			processBarStyle: {}
+			processBarStyle: {},
+			sendResource:[],
+			selectDepart: {
+				Resource: []
+			}
 		};
 	},
 
@@ -73,12 +85,12 @@ var Top = React.createClass({
 
 		//get user info
 		$.get("/currentUser", function(res){
+			res.departs = this._formateResource(res.departs);
 			this.setState({
 				user: res.user,
-				departs: res.departs
-			});
-			this.setState({
-				treeData: this._formatDeparts(res.departs)
+				departs: res.departs,
+				treeData: this._formatDeparts(res.departs),
+				sendResource: this._initResources(res.departs)
 			});
 			socket.emit('userLogin', this.state.user);
 		}.bind(this));
@@ -91,6 +103,47 @@ var Top = React.createClass({
 	  socket.on('send:message', this._messageRecieve);
 	  socket.on('user:join', this._userJoined);
 	  socket.on('user:left', this._userLeft);
+	},
+
+	_formateResource: function(departs){
+    var formatedDepart = [];
+    for(var i = 0; i < departs.length; i++){
+        formatedDepart.push(this._doFromate(departs[i]));
+    }
+    return formatedDepart;
+	},
+
+	_doFromate: function(depart){
+    var resources = depart.Resource;
+    var formatedResource = []
+    Object.keys(resources).forEach(function(key){
+        var resource = {
+            name: key,
+            value: resources[key],
+            send: 0
+        };
+        formatedResource.push(resource);
+    });
+    depart.Resource = [];
+    depart.Resource = formatedResource;
+    return depart;
+	},
+
+	_initResources:function(departs){
+		var resList = [];
+		for(var i = 0; i < departs[0].Resource.length; i++){
+			var resource = departs[0].Resource[i];
+			resource.value = 0;
+			resList.push(resource);
+		}
+		return resList;
+	},
+
+	_getCurrentTotalSend: function(resource){
+		var sendedResource = $.grep(this.state.sendResource, function(e){
+			return e.name == resource.name;
+		})[0];
+		return sendedResource.value;
 	},
 
 	_formatDeparts: function(departs){
@@ -131,19 +184,21 @@ var Top = React.createClass({
 	_toTreeFormat: function(depart) {
 		return{
 			checkbox : (depart.level > 0 ? true : false), 
+			id: depart._id,
 			label: depart.name,
 			children: []
 		}
 	},
 
 	_initMaps: function(){
+		MapsUtil.initMap();
 		var minZoomLevel = 13;
 		var mapOptions = {
 			center: {
 	            lat: 25.048644, 
 	            lng: 121.533715
 	        },
-	        zoom: minZoomLevel
+	    zoom: minZoomLevel
 		};
 
     _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
@@ -314,8 +369,36 @@ var Top = React.createClass({
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-		//console.log(this.state.treeData);
-		//console.log(lineage);
+		var flag = true;
+		for (var i = 0; i < lineage.length; i++) {
+	    if (lineage[i] !== prevLineage[i]) {
+	    	flag = false;
+	    }
+	  }
+
+	  //close previos select tree node
+	  if(!flag){
+	  	console.log("reset");
+	  	console.log(prevLineage);
+	  	this.setState(TreeMenuUtils.getNewTreeState(prevLineage, this.state.treeData, "unchecked"));
+	  	prevLineage = lineage;
+	  }
+
+		var selectedDepart = this.state.treeData;
+		for(var level = 0; level < lineage.length; level++){
+			var index = lineage[level];
+			if(level + 1 == lineage.length){
+				selectedDepart = selectedDepart[index];
+			}else{
+				selectedDepart = selectedDepart[index].children;
+			}
+		}
+		selectedDepart = $.grep(this.state.departs, function(e){
+			return e._id == selectedDepart.id;
+		})[0];
+		this.setState({
+			selectDepart: selectedDepart
+		});
 		//temp1[index[0]].children[index[1]].children[index[2]]
 		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
 	},
@@ -357,6 +440,63 @@ var Top = React.createClass({
   _getRandomArbitrary: function(min, max) {
     return Math.random() * (max - min) + min;
 	},
+
+	_editSendCount: function(resName, value){
+		console.log(value);
+		//目前選到的depart
+		var selectDepart = this.state.selectDepart;
+
+		selectDepart.Resource.map((resource, id) => {
+    	if(resource.name == resName){
+    		resource.send = value;
+    	}
+    });
+
+		//目前選到的 存在於陣列的哪一個index
+		var modifyObjIndex = this._getDepartIndex(selectDepart, this.state.departs);
+		var ary = this.state.departs;
+		ary[modifyObjIndex] = selectDepart;
+    this.setState({
+    	departs: ary,
+      selectDepart: selectDepart,
+    });
+    this._updateSendResource();
+  },
+
+  _updateSendResource: function(){
+  	var sendRes = [];
+  	for(var i = 0; i < this.state.departs.length; i++){
+  		var depart = this.state.departs[i];
+  		depart.Resource.map((resource, id) => {
+  			
+  			var res = $.grep(sendRes, function(e){
+  				return e.name == resource.name;
+  			})[0];
+  			if(res == undefined){
+  				res = {
+  					name: resource.name,
+  					value: resource.value
+  				}
+  			}else{
+  				res.value = parseInt(res.value) + parseInt(resource.send);
+  			}
+  			sendRes.push(res);
+  		});
+  	}
+  	this.setState({
+  		sendResource: sendRes 
+  	});
+  },
+
+  _getDepartIndex: function(selectedDepart, ary){
+  	var index = $.map(ary, function(depart, index){
+  		if(depart._id == selectedDepart._id){
+  			return index;
+  		}
+  	});
+
+  	return index[0];
+  },
 
   onChatTo: function(username){
     this.setState({
@@ -412,10 +552,32 @@ var Top = React.createClass({
 				      <div className="row">
 				        <div id="eagleMap" className="col-md-2 eagle-map"></div>
 				        <div className="col-md-9">
-				        	resource
+				        	<div className="row">
+				        		<div className="col-md-1">
+				        			<div className="row">
+				        				<div className="footer-initial border-bottom">預計派出資源</div>
+				        				<div className="footer-initial border-bottom">各分隊資源</div>
+				        			</div>
+				        		</div>
+				        		
+				        		{
+				        			this.state.selectDepart.Resource.map((resource, i) => {
+					        				return (
+					        					<Resource 
+					        						key={i}
+					        						currentTotalSend = {this._getCurrentTotalSend(resource)}
+					        						departMaxResource = {resource.value}
+					        						resourceName = {resource.name}
+					        						send = {resource.send}
+					        						edit = {this._editSendCount}
+					        					/>
+					        				);
+					        			})
+					        		}
+				        		
+				        	</div>
 				        </div>
 				        <div className="col-md-1">
-				        	<img src="../images/login.png" />
 				        </div>
 				      </div>
 				    </div>

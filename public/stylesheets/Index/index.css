@@ -39,7 +39,7 @@ div.col-md-2 {
     overflow-y: auto;
 }
 
-.situation h3{
+.situation h3 {
     margin: 5px 0 0 0;
     font-weight: bold;
     font-family: Microsoft JhengHei;
@@ -61,7 +61,7 @@ div.col-md-2 {
     bottom: 0;
 }
 
-.situation #system_time::before{
+.situation #system_time::before {
     content: "演練時間: ";
 }
 
@@ -75,11 +75,29 @@ div.col-md-2 {
     left: 0;
 }
 
-.footer * {
+.footer div {
     height: inherit;
+    text-align: center
 }
 
-#departList{
+.footer .footer-initial {
+    height: initial;
+}
+
+.footer .border-bottom {
+    border-bottom-style: solid;
+    border-bottom-color: aqua;
+    border-bottom-width: thin;
+}
+
+.footer .input-group {
+    position: absolute;
+    bottom: 0;
+    width: 90%;
+    right: 5%;
+}
+
+#departList {
     padding: 0 0 0 0;
     overflow-x: auto;
 }
@@ -88,16 +106,17 @@ div.col-md-2 {
     border: 3px solid red;
 }
 
-.eagle-map .gmnoprint a, .gmnoprint span {
-    display:none;
+.eagle-map .gmnoprint a,
+.gmnoprint span {
+    display: none;
 }
 
 .eagle-map.gmnoprint div {
-    background:none !important;
+    background: none !important;
 }
 
-#eagleMap div div a div img{
-    display:none;
+#eagleMap div div a div img {
+    display: none;
 }
 
 
@@ -167,6 +186,20 @@ div.col-md-2 {
     display: none;
 }
 
-.progressbar-container{
+.progressbar-container {
     background: green;
+}
+
+
+/*
+ * fixed spin button
+ */
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+input[type=number] {
+    width: 80%;
 }

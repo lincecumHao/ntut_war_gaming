@@ -23313,6 +23313,72 @@ var component = React.createClass({displayName: "component",
 module.exports = component;
 
 },{"react":248}],255:[function(require,module,exports){
+var MapsUtil = {
+	initMap: function(){
+		console.log("init");
+	}
+}
+
+module.exports = MapsUtil;
+
+},{}],256:[function(require,module,exports){
+var React = require('react');
+
+/**
+ * require props:
+ * resourceName 資源名稱 
+ * currentTotalSend 目前所有單位資源總數
+ * departMaxResource 該單位最大資源數
+ * edit, function() 增減數量的時候用的function
+ * current 目前派出數量
+ **/
+
+var Resource = React.createClass({displayName: "Resource",
+
+	getInitialState: function() {
+		return {
+			value: 0
+		};
+	},
+
+	componentWillMount: function() {
+		this.setState({
+			value: this.props.send 
+		});
+	},
+
+  _valueChange: function(e){
+  	if(parseInt(e.target.value) > this.props.departMaxResource){
+  		this.setState({
+	  		value: this.props.departMaxResource
+	  	});
+  	}else{
+  		this.setState({
+	  		value: parseInt(e.target.value)
+	  	});
+  	}
+  	this.props.edit(this.props.resourceName, e.target.value);
+  },
+
+	render: function() {
+		return (
+			React.createElement("div", {className: "col-md-1"}, 
+			React.createElement("div", {className: "row"}, 
+				React.createElement("div", {className: "footer-initial border-bottom"}, this.props.currentTotalSend), 
+				React.createElement("div", {className: "footer-initial border-bottom"}, this.props.departMaxResource), 
+				React.createElement("img", {src: "/images/firecar_icon.png", title: this.props.resourceName, alt: "消防車", width: "32", height: "32"}), 
+				React.createElement("br", null), 
+  			React.createElement("input", {type: "number", min: "0", max: this.props.departMaxResource, value: this.props.send, onChange: this._valueChange})
+			)
+			)
+		);
+	}
+
+});
+
+module.exports = Resource;
+
+},{"react":248}],257:[function(require,module,exports){
 var React = require('react');
 
 var SituationApp = React.createClass({displayName: "SituationApp",
@@ -23331,7 +23397,7 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 
 module.exports = SituationApp;
 
-},{"react":248}],256:[function(require,module,exports){
+},{"react":248}],258:[function(require,module,exports){
 var React = require('react');
 
 var SysMsg = React.createClass({displayName: "SysMsg",
@@ -23348,7 +23414,7 @@ var SysMsg = React.createClass({displayName: "SysMsg",
 
 module.exports = SysMsg;  
 
-},{"react":248}],257:[function(require,module,exports){
+},{"react":248}],259:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -23358,7 +23424,7 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":258,"react":248,"react-dom":113}],258:[function(require,module,exports){
+},{"./top.jsx":260,"react":248,"react-dom":113}],260:[function(require,module,exports){
 var React = require("react");
 var SituationApp = require("./Situation/SituationApp.jsx");
 
@@ -23380,6 +23446,11 @@ var ProgressBar = require("./Progressbar.jsx");
 //MarkerWithLabel
 var MarkerWithLabel = require('markerwithlabel');
 
+//Resource
+var Resource = require("./Resource/Resource.jsx");
+
+var MapsUtil = require("./RefactorTest.js");
+
 var socket = io();
 var _mainMap;
 var _eagleMap;
@@ -23391,6 +23462,9 @@ var _eagleMapDefaultZoom = 10;
 var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
+
+//previos select tree node
+var prevLineage = [];
 
 var Top = React.createClass({displayName: "Top",
 
@@ -23411,7 +23485,11 @@ var Top = React.createClass({displayName: "Top",
 			systemTime: "",
 			progressRate: 100,
 			disasterMarker: null,
-			processBarStyle: {}
+			processBarStyle: {},
+			sendResource:[],
+			selectDepart: {
+				Resource: []
+			}
 		};
 	},
 
@@ -23434,12 +23512,12 @@ var Top = React.createClass({displayName: "Top",
 
 		//get user info
 		$.get("/currentUser", function(res){
+			res.departs = this._formateResource(res.departs);
 			this.setState({
 				user: res.user,
-				departs: res.departs
-			});
-			this.setState({
-				treeData: this._formatDeparts(res.departs)
+				departs: res.departs,
+				treeData: this._formatDeparts(res.departs),
+				sendResource: this._initResources(res.departs)
 			});
 			socket.emit('userLogin', this.state.user);
 		}.bind(this));
@@ -23452,6 +23530,47 @@ var Top = React.createClass({displayName: "Top",
 	  socket.on('send:message', this._messageRecieve);
 	  socket.on('user:join', this._userJoined);
 	  socket.on('user:left', this._userLeft);
+	},
+
+	_formateResource: function(departs){
+    var formatedDepart = [];
+    for(var i = 0; i < departs.length; i++){
+        formatedDepart.push(this._doFromate(departs[i]));
+    }
+    return formatedDepart;
+	},
+
+	_doFromate: function(depart){
+    var resources = depart.Resource;
+    var formatedResource = []
+    Object.keys(resources).forEach(function(key){
+        var resource = {
+            name: key,
+            value: resources[key],
+            send: 0
+        };
+        formatedResource.push(resource);
+    });
+    depart.Resource = [];
+    depart.Resource = formatedResource;
+    return depart;
+	},
+
+	_initResources:function(departs){
+		var resList = [];
+		for(var i = 0; i < departs[0].Resource.length; i++){
+			var resource = departs[0].Resource[i];
+			resource.value = 0;
+			resList.push(resource);
+		}
+		return resList;
+	},
+
+	_getCurrentTotalSend: function(resource){
+		var sendedResource = $.grep(this.state.sendResource, function(e){
+			return e.name == resource.name;
+		})[0];
+		return sendedResource.value;
 	},
 
 	_formatDeparts: function(departs){
@@ -23492,19 +23611,21 @@ var Top = React.createClass({displayName: "Top",
 	_toTreeFormat: function(depart) {
 		return{
 			checkbox : (depart.level > 0 ? true : false), 
+			id: depart._id,
 			label: depart.name,
 			children: []
 		}
 	},
 
 	_initMaps: function(){
+		MapsUtil.initMap();
 		var minZoomLevel = 13;
 		var mapOptions = {
 			center: {
 	            lat: 25.048644, 
 	            lng: 121.533715
 	        },
-	        zoom: minZoomLevel
+	    zoom: minZoomLevel
 		};
 
     _mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
@@ -23675,8 +23796,36 @@ var Top = React.createClass({displayName: "Top",
 	},
 
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-		//console.log(this.state.treeData);
-		//console.log(lineage);
+		var flag = true;
+		for (var i = 0; i < lineage.length; i++) {
+	    if (lineage[i] !== prevLineage[i]) {
+	    	flag = false;
+	    }
+	  }
+
+	  //close previos select tree node
+	  if(!flag){
+	  	console.log("reset");
+	  	console.log(prevLineage);
+	  	this.setState(TreeMenuUtils.getNewTreeState(prevLineage, this.state.treeData, "unchecked"));
+	  	prevLineage = lineage;
+	  }
+
+		var selectedDepart = this.state.treeData;
+		for(var level = 0; level < lineage.length; level++){
+			var index = lineage[level];
+			if(level + 1 == lineage.length){
+				selectedDepart = selectedDepart[index];
+			}else{
+				selectedDepart = selectedDepart[index].children;
+			}
+		}
+		selectedDepart = $.grep(this.state.departs, function(e){
+			return e._id == selectedDepart.id;
+		})[0];
+		this.setState({
+			selectDepart: selectedDepart
+		});
 		//temp1[index[0]].children[index[1]].children[index[2]]
 		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
 	},
@@ -23718,6 +23867,63 @@ var Top = React.createClass({displayName: "Top",
   _getRandomArbitrary: function(min, max) {
     return Math.random() * (max - min) + min;
 	},
+
+	_editSendCount: function(resName, value){
+		console.log(value);
+		//目前選到的depart
+		var selectDepart = this.state.selectDepart;
+
+		selectDepart.Resource.map((resource, id) => {
+    	if(resource.name == resName){
+    		resource.send = value;
+    	}
+    });
+
+		//目前選到的 存在於陣列的哪一個index
+		var modifyObjIndex = this._getDepartIndex(selectDepart, this.state.departs);
+		var ary = this.state.departs;
+		ary[modifyObjIndex] = selectDepart;
+    this.setState({
+    	departs: ary,
+      selectDepart: selectDepart,
+    });
+    this._updateSendResource();
+  },
+
+  _updateSendResource: function(){
+  	var sendRes = [];
+  	for(var i = 0; i < this.state.departs.length; i++){
+  		var depart = this.state.departs[i];
+  		depart.Resource.map((resource, id) => {
+  			
+  			var res = $.grep(sendRes, function(e){
+  				return e.name == resource.name;
+  			})[0];
+  			if(res == undefined){
+  				res = {
+  					name: resource.name,
+  					value: resource.value
+  				}
+  			}else{
+  				res.value = parseInt(res.value) + parseInt(resource.send);
+  			}
+  			sendRes.push(res);
+  		});
+  	}
+  	this.setState({
+  		sendResource: sendRes 
+  	});
+  },
+
+  _getDepartIndex: function(selectedDepart, ary){
+  	var index = $.map(ary, function(depart, index){
+  		if(depart._id == selectedDepart._id){
+  			return index;
+  		}
+  	});
+
+  	return index[0];
+  },
 
   onChatTo: function(username){
     this.setState({
@@ -23773,10 +23979,32 @@ var Top = React.createClass({displayName: "Top",
 				      React.createElement("div", {className: "row"}, 
 				        React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
 				        React.createElement("div", {className: "col-md-9"}, 
-				        	"resource"
+				        	React.createElement("div", {className: "row"}, 
+				        		React.createElement("div", {className: "col-md-1"}, 
+				        			React.createElement("div", {className: "row"}, 
+				        				React.createElement("div", {className: "footer-initial border-bottom"}, "預計派出資源"), 
+				        				React.createElement("div", {className: "footer-initial border-bottom"}, "各分隊資源")
+				        			)
+				        		), 
+				        		
+				        		
+				        			this.state.selectDepart.Resource.map((resource, i) => {
+					        				return (
+					        					React.createElement(Resource, {
+					        						key: i, 
+					        						currentTotalSend: this._getCurrentTotalSend(resource), 
+					        						departMaxResource: resource.value, 
+					        						resourceName: resource.name, 
+					        						send: resource.send, 
+					        						edit: this._editSendCount}
+					        					)
+					        				);
+					        			})
+					        		
+				        		
+				        	)
 				        ), 
-				        React.createElement("div", {className: "col-md-1"}, 
-				        	React.createElement("img", {src: "../images/login.png"})
+				        React.createElement("div", {className: "col-md-1"}
 				        )
 				      )
 				    )
@@ -23803,4 +24031,4 @@ var Top = React.createClass({displayName: "Top",
 
 module.exports = Top;
 
-},{"./Chatroom/ChatForm.jsx":249,"./Chatroom/ChatMsgLst.jsx":251,"./Chatroom/UserList.jsx":253,"./Progressbar.jsx":254,"./Situation/SituationApp.jsx":255,"./SysMessage/SysMessages.jsx":256,"markerwithlabel":111,"react":248,"react-tree-menu":114}]},{},[257]);
+},{"./Chatroom/ChatForm.jsx":249,"./Chatroom/ChatMsgLst.jsx":251,"./Chatroom/UserList.jsx":253,"./Progressbar.jsx":254,"./RefactorTest.js":255,"./Resource/Resource.jsx":256,"./Situation/SituationApp.jsx":257,"./SysMessage/SysMessages.jsx":258,"markerwithlabel":111,"react":248,"react-tree-menu":114}]},{},[259]);
