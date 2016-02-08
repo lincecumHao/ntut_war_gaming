@@ -32739,9 +32739,6 @@ module.exports = Resource;
 },{"react":249}],259:[function(require,module,exports){
 var utils = {
 
-    //TODO, 把 send 改成 dispatched, value 改成 maxAvailable
-    //TODO, change the key 'send' to 'dispatched' and 'value' to 'maxAvailable', increse the readable.
-
     /**
      *	shourld always private,
      *	handle the total dispatched resource informantion.
@@ -32813,9 +32810,6 @@ var utils = {
         var totalDispatched = [];
         for (var i = 0; i < departs[0].Resource.length; i++) {
             var resource = departs[0].Resource[i];
-
-            //TODO: check this value, why zero? or change to "dispatched" key.
-            resource.value = 0;
             resource.dispatched = 0;
             totalDispatched.push(resource);
         }
@@ -32861,11 +32855,6 @@ var utils = {
 
 module.exports = utils;
 },{}],260:[function(require,module,exports){
-// var api = require('./Resource.jsx');
-
-// api.Resource = require('./Resource.jsx');
-// api.Utils = require('./ResourceUtils');
-
 var api = {
 
 	Resource: require('./Resource.jsx'),
@@ -32896,6 +32885,15 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 module.exports = SituationApp;
 
 },{"react":249}],262:[function(require,module,exports){
+var api = {
+
+	SystemMessage: require('./src/SystemMsgList.jsx'),
+}
+
+
+module.exports = api;
+
+},{"./src/SystemMsgList.jsx":264}],263:[function(require,module,exports){
 var React = require('react');
 
 var SysMsg = React.createClass({displayName: "SysMsg",
@@ -32912,7 +32910,40 @@ var SysMsg = React.createClass({displayName: "SysMsg",
 
 module.exports = SysMsg;  
 
-},{"react":249}],263:[function(require,module,exports){
+},{"react":249}],264:[function(require,module,exports){
+var React = require('react');
+var SysMsg = require('./SysMessages.jsx');
+
+var SystemMsgList = React.createClass({displayName: "SystemMsgList",
+
+	getInitialState: function() {
+		return {
+			sysMessages:[]
+		};
+	},
+
+	render: function() {
+		return (
+			React.createElement("div", {id: "system_message"}, 
+				
+					this.props.sysMessages.map((message, i) => {
+						return (
+							React.createElement(SysMsg, {
+								key: i, 
+								text: message.text}
+							)
+						);
+					})
+				
+			)
+		);
+	}
+
+});
+
+module.exports = SystemMsgList;
+
+},{"./SysMessages.jsx":263,"react":249}],265:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -32922,7 +32953,7 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":264,"react":249,"react-dom":114}],264:[function(require,module,exports){
+},{"./top.jsx":266,"react":249,"react-dom":114}],266:[function(require,module,exports){
 var React = require("react");
 var SituationApp = require("./Situation/SituationApp.jsx");
 
@@ -32934,7 +32965,7 @@ var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 
 //SysMsg
-var SysMsgs = require("./SysMessage/SysMessages.jsx");
+var SystemMessage = require("./SysMessage/").SystemMessage;
 
 //ProgressBar
 var ProgressBar = require("./Progressbar.jsx");
@@ -32948,15 +32979,11 @@ var Resource = require("./Resource/").Resource;
 
 var prevLineage = undefined;
 
-// var socket = io();
 var _mainMap;
 var _eagleMap;
 var _overlay;
 var _eagleMapDefaultZoom = 10;
 
-
-//remind what is next depart, for avoid geolocate out of query limit
-var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
 
@@ -33359,18 +33386,7 @@ this._onDisasterHappen();
 									color: "red"}
 								)
 							), 
-							React.createElement("div", {id: "over_map"}, 
-								
-									this.state.sysMessages.map((message, i) => {
-										return (
-											React.createElement(SysMsgs, {
-												key: i, 
-												text: message.text}
-											)
-										);
-									})
-								
-							)
+							React.createElement(SystemMessage, {sysMessages: this.state.sysMessages}	)
 						)
 					), 
 					React.createElement("footer", {className: "footer"}, 
@@ -33416,5 +33432,4 @@ this._onDisasterHappen();
 });
 
 module.exports = Top;
-
-},{"./Chatroom/":250,"./Progressbar.jsx":257,"./Resource/":260,"./Situation/SituationApp.jsx":261,"./SysMessage/SysMessages.jsx":262,"markerwithlabel":112,"react":249,"react-tree-menu":115}]},{},[263]);
+},{"./Chatroom/":250,"./Progressbar.jsx":257,"./Resource/":260,"./Situation/SituationApp.jsx":261,"./SysMessage/":262,"markerwithlabel":112,"react":249,"react-tree-menu":115}]},{},[265]);

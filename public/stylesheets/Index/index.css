@@ -167,7 +167,7 @@ div.col-md-2 {
     padding: 0 0 0 0;
 }
 
-#over_map {
+#system_message {
     position: absolute;
     top: 75%;
     left: 80%;
@@ -176,6 +176,7 @@ div.col-md-2 {
     height: 25%;
     word-break: break-word;
     background: gray;
+    overflow-y: scroll;
 }
 
 .over_map_processbar {

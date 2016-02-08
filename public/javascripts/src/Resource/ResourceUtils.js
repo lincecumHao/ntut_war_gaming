@@ -1,8 +1,5 @@
 var utils = {
 
-    //TODO, 把 send 改成 dispatched, value 改成 maxAvailable
-    //TODO, change the key 'send' to 'dispatched' and 'value' to 'maxAvailable', increse the readable.
-
     /**
      *	shourld always private,
      *	handle the total dispatched resource informantion.
@@ -74,9 +71,6 @@ var utils = {
         var totalDispatched = [];
         for (var i = 0; i < departs[0].Resource.length; i++) {
             var resource = departs[0].Resource[i];
-
-            //TODO: check this value, why zero? or change to "dispatched" key.
-            resource.value = 0;
             resource.dispatched = 0;
             totalDispatched.push(resource);
         }

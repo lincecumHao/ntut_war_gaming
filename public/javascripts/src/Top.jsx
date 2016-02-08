@@ -9,7 +9,7 @@ var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 
 //SysMsg
-var SysMsgs = require("./SysMessage/SysMessages.jsx");
+var SystemMessage = require("./SysMessage/").SystemMessage;
 
 //ProgressBar
 var ProgressBar = require("./Progressbar.jsx");
@@ -23,15 +23,11 @@ var Resource = require("./Resource/").Resource;
 
 var prevLineage = undefined;
 
-// var socket = io();
 var _mainMap;
 var _eagleMap;
 var _overlay;
 var _eagleMapDefaultZoom = 10;
 
-
-//remind what is next depart, for avoid geolocate out of query limit
-var _nextDepart = 0;
 var delay = 100;
 var departsWithDuration = [];
 
@@ -434,18 +430,7 @@ this._onDisasterHappen();
 									color={"red"}
 								/>
 							</div>
-							<div id="over_map">
-								{
-									this.state.sysMessages.map((message, i) => {
-										return (
-											<SysMsgs
-												key={i}
-												text={message.text}
-											/>
-										);
-									})
-								}
-							</div>
+							<SystemMessage sysMessages={this.state.sysMessages}	/>
 						</div>
 					</div>
 					<footer className="footer">
