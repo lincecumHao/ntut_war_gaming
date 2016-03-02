@@ -5,7 +5,7 @@
   隨聽隨忘,好不快樂...所以需要有一個系統讓下屬單位能夠參與增加印象etc...
 ### 系統流程
   - 使用者進入系統後 10 秒會於地圖上顯示一個隨機事件點
-  - 左方所有單位列表會依據這個事件點, 計算各單位抵達這個事件點的時間(Google Direction API - [https://developers.google.com/maps/documentation/directions/?hl=zh-tw] - )
+  - 左方所有單位列表會依據這個事件點, 計算各單位抵達這個事件點的時間(Google Direction API https://developers.google.com/maps/documentation/directions/?hl=zh-tw
   - 使用者可以選擇每一個單位要派出的資源數量
   - 統計所有資源數量
   - 派出單位資源
@@ -13,8 +13,8 @@
   - END
   - 聊天室btw
 ### 系統功能
-NWG主要是協助消防局再進行兵棋推演時，能夠讓協辦單位有事情可以做(?)的一個小系統。
-主要的功能有:
+  NWG主要是協助消防局再進行兵棋推演時，能夠讓協辦單位有事情可以做(?)的一個小系統。
+  主要的功能有:
   - 頂端有一個目前事件發生情況(先用假資料, 過10秒會換目前情況)
   - 有一個Google Maps地圖 (其實應該是兩個, 包含左下角Eagle-Map的話), zoom out fixed, pan boundary fixed, foucus in Taipei.
   - Eagle-Map上的紅色框會隨著主地圖的中心點移動
