@@ -1,7 +1,7 @@
 # NTUT-WAR-GAMING(NWG)  
 消防局兵棋推演輔助系統
 
-### [DEMO](ntut-war-game.herokuapp.com)
+### [DEMO](http://ntut-war-game.herokuapp.com)
 
 ### 系統需求
   據傳在兵棋推演的時候, 是召集所有單位坐在一個辦公室, 聽台上的人講目前發生的狀況,應該如何處理.  
