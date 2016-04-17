@@ -13,8 +13,15 @@ var ChatApp = React.createClass({
 				"all"
 			], 
 			messages:[], 
-			chatTo: undefined
+			chatTo: undefined,
+			windowHeight: window.innerHeight
 		};
+	},
+
+	componentWillMount: function() {
+		this.setState({
+			windowHeight: window.innerHeight 
+		});
 	},
 
 	componentDidMount: function() {
@@ -23,6 +30,11 @@ var ChatApp = React.createClass({
 		this.state.socket.on('send:message', this._messageRecieve);
 		this.state.socket.on('user:join', this._userJoined);
 		this.state.socket.on('user:left', this._userLeft);
+		window.addEventListener('resize', function(){
+			this.setState({
+				windowHeight: window.innerHeight 
+			});
+		}.bind(this));
 	},
 
 	componentWillReceiveProps: function(nextProps) {
@@ -62,19 +74,28 @@ var ChatApp = React.createClass({
 	 **/
 	_userJoined: function(username) {
 		var currentUsers = this.state.users;
+
+		//判斷這個user是否在目前user中
 		if(currentUsers.indexOf(username) > -1) {
 			return;
 		}else{
+
+			//如果沒有 通知有user加入
 			currentUsers.push(username);
 			this.setState({
 				users: currentUsers 
 			});
+
+			//製作system msg obj
+			var msg = {
+				text: username + ' 已登入系統',
+				chatTo: '',
+				from: 'system'
+			}
+			var stateMsgs = this.state.messages;
+			stateMsgs.push(msg);
+			this.setState({messages: stateMsgs});
 		}
-
-		
-
-		var notifyMsg = username + " 已加入系統";
-		this.props.systemNotify(notifyMsg);
 	},
 
 	/**
@@ -90,8 +111,15 @@ var ChatApp = React.createClass({
 			users: currentUsers 
 		});	
 		
-		var notifyMsg = username + " 已離開系統";
-		this.props.systemNotify(notifyMsg);
+		//製作system msg obj
+		var msg = {
+			text: username + ' 已離開系統',
+			chatTo: '',
+			from: 'system'
+		}
+		var stateMsgs = this.state.messages;
+		stateMsgs.push(msg);
+		this.setState({messages: stateMsgs});
 	},
 
 	/**
@@ -115,12 +143,13 @@ var ChatApp = React.createClass({
 	render: function() {
 			return (
 				<div className="col-md-2 full-height chat">
-					<UserList 
+					<UserList
 						users={this.state.users}
 						onChatTo={this._onChatTo}
 					 />
 					<MessageList
 						messages={this.state.messages}
+						windowHeight={this.state.windowHeight}
 					/>
 					<MessageForm
 						onMessageSubmit={this._handleMessageSubmit}

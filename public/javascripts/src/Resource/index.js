@@ -1,8 +1,8 @@
 var api = {
 
-	Resource: require('./Resource.jsx'),
+	Resource: require('./src/Resource.jsx'),
 
-	Utils: require('./ResourceUtils')
+	Utils: require('./src/ResourceUtils')
 }
 
 
