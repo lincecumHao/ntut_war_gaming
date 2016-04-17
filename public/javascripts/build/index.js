@@ -32382,8 +32382,15 @@ var ChatApp = React.createClass({displayName: "ChatApp",
 				"all"
 			], 
 			messages:[], 
-			chatTo: undefined
+			chatTo: undefined,
+			windowHeight: window.innerHeight
 		};
+	},
+
+	componentWillMount: function() {
+		this.setState({
+			windowHeight: window.innerHeight 
+		});
 	},
 
 	componentDidMount: function() {
@@ -32392,6 +32399,11 @@ var ChatApp = React.createClass({displayName: "ChatApp",
 		this.state.socket.on('send:message', this._messageRecieve);
 		this.state.socket.on('user:join', this._userJoined);
 		this.state.socket.on('user:left', this._userLeft);
+		window.addEventListener('resize', function(){
+			this.setState({
+				windowHeight: window.innerHeight 
+			});
+		}.bind(this));
 	},
 
 	componentWillReceiveProps: function(nextProps) {
@@ -32431,19 +32443,28 @@ var ChatApp = React.createClass({displayName: "ChatApp",
 	 **/
 	_userJoined: function(username) {
 		var currentUsers = this.state.users;
+
+		//判斷這個user是否在目前user中
 		if(currentUsers.indexOf(username) > -1) {
 			return;
 		}else{
+
+			//如果沒有 通知有user加入
 			currentUsers.push(username);
 			this.setState({
 				users: currentUsers 
 			});
+
+			//製作system msg obj
+			var msg = {
+				text: username + ' 已登入系統',
+				chatTo: '',
+				from: 'system'
+			}
+			var stateMsgs = this.state.messages;
+			stateMsgs.push(msg);
+			this.setState({messages: stateMsgs});
 		}
-
-		
-
-		var notifyMsg = username + " 已加入系統";
-		this.props.systemNotify(notifyMsg);
 	},
 
 	/**
@@ -32459,8 +32480,15 @@ var ChatApp = React.createClass({displayName: "ChatApp",
 			users: currentUsers 
 		});	
 		
-		var notifyMsg = username + " 已離開系統";
-		this.props.systemNotify(notifyMsg);
+		//製作system msg obj
+		var msg = {
+			text: username + ' 已離開系統',
+			chatTo: '',
+			from: 'system'
+		}
+		var stateMsgs = this.state.messages;
+		stateMsgs.push(msg);
+		this.setState({messages: stateMsgs});
 	},
 
 	/**
@@ -32489,7 +32517,8 @@ var ChatApp = React.createClass({displayName: "ChatApp",
 						onChatTo: this._onChatTo}
 					 ), 
 					React.createElement(MessageList, {
-						messages: this.state.messages}
+						messages: this.state.messages, 
+						windowHeight: this.state.windowHeight}
 					), 
 					React.createElement(MessageForm, {
 						onMessageSubmit: this._handleMessageSubmit, 
@@ -32525,6 +32554,7 @@ var ChatForm = React.createClass({displayName: "ChatForm",
 
 	handelSubmit: function(e){
 		e.preventDefault();
+		if(this.state.text == "") return;
 		var message = {
 			from : this.props.from,
           	text : this.state.text,
@@ -32543,13 +32573,13 @@ var ChatForm = React.createClass({displayName: "ChatForm",
 	render: function() {
 		return (
 			React.createElement("div", {id: "sendMsgFormHolder", className: "row send-message"}, 
-				React.createElement("form", {onSubmit: this.handelSubmit}, 
-					React.createElement("div", {className: "input-group same-height"}, 
+				React.createElement("div", {className: "input-group same-height"}, 
+					React.createElement("form", {onSubmit: this.handelSubmit}, 
 						React.createElement("input", {type: "text", className: "form-control", placeholder: this.props.chatTo ? "對" + this.props.chatTo + "說" : "訊息", onChange: this.handelMessage, value: this.state.text}), 
 				      	React.createElement("span", {className: "input-group-btn"}, 
-				        	React.createElement("button", {type: "submit", className: "btn btn-success same-height"}, "送出")
+				        	React.createElement("button", {type: "button", className: "btn btn-success same-height", onClick: this.handelSubmit}, "送出")
 				        )
-					)
+			        )
 				)
 			)
 		);
@@ -32564,10 +32594,18 @@ var React = require('react');
 
 var ChatMsg = React.createClass({displayName: "ChatMsg",
   render() {
+  		var msg;
+  		var msgClass = 'message';
+  		if(this.props.userFrom == 'system'){
+  			msgClass = 'sysMessage';
+  			msg = this.props.text;
+  		}else{
+  			msg = this.props.userFrom + (this.props.userChatTo ? ' 對 ' + this.props.userChatTo : '') + '說: ' + this.props.text;
+  		}
       return (
-          React.createElement("div", null, 
+          React.createElement("div", {className: msgClass}, 
           	React.createElement("p", null, 
-          		React.createElement("mark", null, this.props.userFrom), " ", this.props.userChatTo ? ' 對 ' + this.props.userChatTo : '', " 說:", this.props.text
+          		msg
           	)
           )
       );
@@ -32578,14 +32616,51 @@ module.exports = ChatMsg;
 
 },{"react":249}],254:[function(require,module,exports){
 var React = require('react');
+var ReactDOM = require("react-dom");
 var Message = require("./ChatMsg.jsx");
 
 var MessageList = React.createClass({displayName: "MessageList",
+  getInitialState: function() {
+    return {
+      containerInlineStyle: {height: '0px'},
+      messageListInlineStyle: {height: '0px'}
+    }
+  },
+
+  componentWillReceiveProps: function(nextProp) {
+    var containerInlineStyle = {};
+    var messageListInlineStyle = {};
+    containerInlineStyle['height'] = parseInt(nextProp.windowHeight * 0.7 - 35);
+    messageListInlineStyle['height'] = parseInt(containerInlineStyle.height - 40);
+    this.setState({
+      containerInlineStyle: {containerInlineStyle},
+      messageListInlineStyle: messageListInlineStyle
+    });
+  },
+
+  componentWillUpdate: function() {
+    var node = ReactDOM.findDOMNode(this.refs.msgList);
+    this.shouldScrollBottom = node.scrollTop + node.offsetHeight === node.scrollHeight;
+  },
+   
+  componentDidUpdate: function() {
+    if (this.shouldScrollBottom) {
+      this._msgListcrollTop();
+    }
+  },
+
+  _msgListcrollTop: function(){
+    var node = ReactDOM.findDOMNode(this.refs.msgList) ;
+    node.scrollTop = node.scrollHeight;
+  },
+
   render() {
       return (
-          React.createElement("div", {className: "row message-list"}, 
-              React.createElement("h3", null, " 對話框: "), 
-              React.createElement("div", {className: "messages"}, 
+          React.createElement("div", {className: "row message-container", style: this.state.containerInlineStyle}, 
+              React.createElement("div", {className: "chatroom-subject"}, 
+                React.createElement("h3", null, " 對話框: ")
+              ), 
+              React.createElement("div", {ref: "msgList", className: "message-list", style: this.state.messageListInlineStyle}, 
                 
                     this.props.messages.map((message, i) => {
                         return (
@@ -32606,7 +32681,7 @@ var MessageList = React.createClass({displayName: "MessageList",
 
 module.exports = MessageList;  
 
-},{"./ChatMsg.jsx":253,"react":249}],255:[function(require,module,exports){
+},{"./ChatMsg.jsx":253,"react":249,"react-dom":114}],255:[function(require,module,exports){
 var React = require('react');
 
 var User = React.createClass({displayName: "User",
@@ -32633,7 +32708,9 @@ var UsersList = React.createClass({displayName: "UsersList",
   render: function() {
       return (
           React.createElement("div", {className: "row login-user"}, 
-              React.createElement("h3", null, " 目前使用者 "), 
+            React.createElement("div", {className: "chatroom-subject"}, 
+              React.createElement("h3", null, " 目前使用者 ")
+            ), 
                   
                       this.props.users.map((user, i) => {
                           return (
@@ -32680,6 +32757,109 @@ var component = React.createClass({displayName: "component",
 module.exports = component;
 
 },{"react":249}],258:[function(require,module,exports){
+var api = {
+
+	Resource: require('./src/Resource.jsx'),
+
+	Utils: require('./src/ResourceUtils')
+}
+
+
+module.exports = api;
+
+},{"./src/Resource.jsx":259,"./src/ResourceUtils":261}],259:[function(require,module,exports){
+var React = require('react');
+var ResourceItem = require('./ResourceItem.jsx');
+var ResourceUtils = require('./ResourceUtils.js');
+
+var Resource = React.createClass({displayName: "Resource",
+
+	_editSendCount: function(resName, value){
+		//目前選到的depart
+		var selectDepart = this.props.selectDepart;
+		selectDepart.Resource.forEach((resource, id) => {
+			if(resource.name == resName){
+				//更新deaprt 的 dispatched
+				resource.dispatched = value;
+			}
+		});
+
+		this._updateDeaprts(selectDepart);
+	},
+
+	_updateDeaprts: function(editedDepart){
+		this.props.updateDeparts(editedDepart);
+	},
+
+	_resetRes: function(){
+		var cancle = confirm("確定清除此分隊所有派送資源?")
+		if(cancle){
+			for(var i = 0; i < this.props.selectDepart.Resource.length; i++){
+				this.refs['resItem' + i]._resetValue()
+			}
+		}
+	},
+
+	_sendRes: function(){
+		var sendArray = [];
+		for(var i = 0; i < this.props.selectDepart.Resource.length; i++){
+			var resource = this.refs['resItem' + i]._getCurrentSend();
+			if(resource.value > 0){
+				sendArray.push(resource);
+			}
+		}
+		if(sendArray.length > 0){
+			var sendRes = confirm("確定派送目前資源?");
+			if(sendRes){
+				this.props.sendResource(sendArray);
+			}
+		}
+	},
+
+	render: function() {
+		var displayBtn = {'display': 'none'};
+		if(this.props.selectDepart.Resource.length){
+			displayBtn = {};
+		}
+		return (
+			React.createElement("div", {className: "row"}, 
+				React.createElement("div", {className: "col-md-1"}, 
+					React.createElement("div", {className: "row"}, 
+						React.createElement("div", {className: "footer-initial border-bottom"}, "總派出資源"), 
+						React.createElement("div", {className: "footer-initial border-bottom"}, "各分隊資源")
+					)
+				), 
+				React.createElement("div", {className: "col-md-10 res-list"}, 
+					
+						this.props.selectDepart.Resource.map((resource, i) => {
+							return (
+								React.createElement(ResourceItem, {ref: 'resItem' + i, 
+									key: i, 
+									totalDispatched: ResourceUtils.getTotalDispatchedByResource(resource), 
+									departMaxResource: resource.maxAvailable, 
+									resourceName: resource.name, 
+									dispatched: resource.dispatched, 
+									edit: this._editSendCount}
+								)
+							);
+						})
+					
+				), 
+				React.createElement("div", {className: "col-md-1", style: displayBtn}, 
+					React.createElement("button", {name: "confirm", type: "button", className: "btn btn-primary send-res-confirm", onClick: this._sendRes}, "送出"), 
+					React.createElement("bt", null), 
+					React.createElement("button", {name: "cancle", type: "button", className: "btn btn-danger", onClick: this._resetRes}, "取消")
+				)
+				
+			)
+		);
+	}
+
+});
+
+module.exports = Resource;
+
+},{"./ResourceItem.jsx":260,"./ResourceUtils.js":261,"react":249}],260:[function(require,module,exports){
 var React = require('react');
 
 /**
@@ -32718,16 +32898,35 @@ var Resource = React.createClass({displayName: "Resource",
   	this.props.edit(this.props.resourceName, e.target.value);
   },
 
+  _resetValue: function(){
+  	this.setState({
+	  		value: 0
+	  	});
+  	this.props.edit(this.props.resourceName, 0);
+  },
+
+  //拿到目前選的資源數
+  _getCurrentSend: function(){
+  	return{
+  		resName: this.props.resourceName,
+  		value: this.state.value
+  	}
+  },
+
 	render: function() {
+		var iconPath = "";
+		if(this.props.resourceName){
+			iconPath = "/images/resourceIcons/" + this.props.resourceName + ".png"
+		}
 		return (
-			React.createElement("div", {className: "col-md-1"}, 
-			React.createElement("div", {className: "row"}, 
-				React.createElement("div", {className: "footer-initial border-bottom"}, this.props.totalDispatched), 
-				React.createElement("div", {className: "footer-initial border-bottom"}, this.props.departMaxResource), 
-				React.createElement("img", {src: "/images/firecar_icon.png", title: this.props.resourceName, alt: "消防車", width: "32", height: "32"}), 
-				React.createElement("br", null), 
-  			React.createElement("input", {type: "number", min: "0", max: this.props.departMaxResource, value: this.props.dispatched, onChange: this._valueChange})
-			)
+			React.createElement("div", {className: "col-md-1 res-item"}, 
+				React.createElement("div", {className: "row"}, 
+					React.createElement("div", {className: "footer-initial border-bottom"}, this.props.totalDispatched), 
+					React.createElement("div", {className: "footer-initial border-bottom"}, this.props.departMaxResource), 
+					React.createElement("img", {src: iconPath, title: this.props.resourceName, alt: this.props.resourceName, width: "32", height: "32"}), 
+					React.createElement("br", null), 
+	  			React.createElement("input", {type: "number", min: "0", max: this.props.departMaxResource, value: this.props.dispatched, onChange: this._valueChange})
+				)
 			)
 		);
 	}
@@ -32736,7 +32935,7 @@ var Resource = React.createClass({displayName: "Resource",
 
 module.exports = Resource;
 
-},{"react":249}],259:[function(require,module,exports){
+},{"react":249}],261:[function(require,module,exports){
 var utils = {
 
     /**
@@ -32854,18 +33053,7 @@ var utils = {
 }
 
 module.exports = utils;
-},{}],260:[function(require,module,exports){
-var api = {
-
-	Resource: require('./Resource.jsx'),
-
-	Utils: require('./ResourceUtils')
-}
-
-
-module.exports = api;
-
-},{"./Resource.jsx":258,"./ResourceUtils":259}],261:[function(require,module,exports){
+},{}],262:[function(require,module,exports){
 var React = require('react');
 
 var SituationApp = React.createClass({displayName: "SituationApp",
@@ -32884,66 +33072,75 @@ var SituationApp = React.createClass({displayName: "SituationApp",
 
 module.exports = SituationApp;
 
-},{"react":249}],262:[function(require,module,exports){
-var api = {
+},{"react":249}],263:[function(require,module,exports){
+var utils = {
 
-	SystemMessage: require('./src/SystemMsgList.jsx'),
+    /**
+     * transfer deaprts object to tree data format for TreeMenu lib.
+     *	把departs轉成tree data給 react-tree-menu lib 使用
+     **/
+    departsToTreeFormat: function(departs) {
+        var formatedAry = [];
+        var maxLevel = this._getMaxDepartLevel(departs);
+
+        //append first node
+        formatedAry.push(this._toTreeFormat(departs[0], maxLevel));
+
+        for (var i = 1; i < departs.length; i++) {
+            formatedAry = this._add2Parent(departs[i], formatedAry, maxLevel);
+        }
+        return formatedAry;
+    },
+
+    /**
+     * 	add child depart to parent depart
+     *	遞迴, 把所屬單位放到父單位
+     **/
+    _add2Parent: function(depart, array, maxLevel) {
+        for (var i = 0; i < array.length; i++) {
+            var parent = array[i];
+
+            //avoid parent name has duration time.
+            //當加入抵達時間的時候，要split 避免找不到parent
+            var parentName = parent.label.split(" ")[0];
+            if (depart.parent == parentName) {
+                array[i].children.push(this._toTreeFormat(depart, maxLevel));
+                return array;
+            } else if (parent.children.length > 0) {
+                this._add2Parent(depart, array[i].children, maxLevel);
+            }
+        }
+        return array;
+    },
+
+    /**
+     * 	get max level of this departs
+     **/
+    _getMaxDepartLevel: function(departs) {
+        var mxLevel = 0;
+        for (var i = 0; i < departs.length; i++) {
+            mxLevel = (departs[i].level > mxLevel ? departs[i].level : mxLevel);
+        }
+        return mxLevel
+    },
+
+    /**
+     *	trans single deaprt to tree data format.
+     */
+    _toTreeFormat: function(depart, maxLevel) {
+        return {
+            depart: depart,
+            checkbox: (depart.level == maxLevel ? true : false),
+            isRadio: true,
+            id: depart._id,
+            label: depart.name,
+            children: []
+        }
+    }
 }
 
-
-module.exports = api;
-
-},{"./src/SystemMsgList.jsx":264}],263:[function(require,module,exports){
-var React = require('react');
-
-var SysMsg = React.createClass({displayName: "SysMsg",
-  render() {
-      return (
-          React.createElement("div", null, 
-          	React.createElement("p", null, 
-          		this.props.text
-          	)
-          )
-      );
-  }
-});
-
-module.exports = SysMsg;  
-
-},{"react":249}],264:[function(require,module,exports){
-var React = require('react');
-var SysMsg = require('./SysMessages.jsx');
-
-var SystemMsgList = React.createClass({displayName: "SystemMsgList",
-
-	getInitialState: function() {
-		return {
-			sysMessages:[]
-		};
-	},
-
-	render: function() {
-		return (
-			React.createElement("div", {id: "system_message"}, 
-				
-					this.props.sysMessages.map((message, i) => {
-						return (
-							React.createElement(SysMsg, {
-								key: i, 
-								text: message.text}
-							)
-						);
-					})
-				
-			)
-		);
-	}
-
-});
-
-module.exports = SystemMsgList;
-
-},{"./SysMessages.jsx":263,"react":249}],265:[function(require,module,exports){
+module.exports = utils;
+},{}],264:[function(require,module,exports){
 var React = require("react");
 var ReactDOM = require("react-dom");
 var Top = require("./top.jsx");
@@ -32953,8 +33150,11 @@ ReactDOM.render(
 	document.getElementById("content")
 );
 
-},{"./top.jsx":266,"react":249,"react-dom":114}],266:[function(require,module,exports){
+},{"./top.jsx":265,"react":249,"react-dom":114}],265:[function(require,module,exports){
 var React = require("react");
+var warGameUtils = require('./Utils.js');
+
+//Siutaion
 var SituationApp = require("./Situation/SituationApp.jsx");
 
 //Chatroom 
@@ -32965,7 +33165,7 @@ var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 
 //SysMsg
-var SystemMessage = require("./SysMessage/").SystemMessage;
+//var SystemMessage = require("./SysMessage/").SystemMessage;
 
 //ProgressBar
 var ProgressBar = require("./Progressbar.jsx");
@@ -33032,7 +33232,7 @@ var Top = React.createClass({displayName: "Top",
 			this.setState({
 				user: res.user,
 				departs: departs,
-				treeData: this._formatDeparts(departs),
+				treeData: warGameUtils.departsToTreeFormat(departs),
 			});
 		}.bind(this));
 	},
@@ -33042,76 +33242,31 @@ var Top = React.createClass({displayName: "Top",
 		this._initMaps();
 	},
 
-	_formatDeparts: function(departs){
-		var formatedAry = [];
-		formatedAry.push(this._toTreeFormat(departs[0]));
-		var maxLevel = this._getMaxDepartLevel(departs);
-		for(var i = 1; i < departs.length; i++){
-			formatedAry = this._add2Parent(departs[i], formatedAry);
-		}
-		return formatedAry;
-	},
-
-	_add2Parent: function(depart, array){
-		for(var i = 0; i < array.length; i++){
-			var parent = array[i];
-			//avoid parent name has duration time.
-			var parentName = parent.label.split(" ")[0];
-			if(depart.parent == parentName){
-				array[i].children.push(this._toTreeFormat(depart));
-				return array;
-			}else if(parent.children.length > 0){
-				this._add2Parent(depart, array[i].children);
-			}
-		}
-		return array;
-	},
-
-	_getMaxDepartLevel: function(departs){
-		var mxLevel = 0;
-		for(var i = 0; i < departs.length; i++){
-			mxLevel = (departs[i].level > mxLevel ? departs[i].level : mxLevel);
-		}
-		return mxLevel
-	},
-
-	_toTreeFormat: function(depart) {
-		return{
-			depart: depart,
-			checkbox : (depart.level > 0 ? true : false), 
-			isRadio: true,
-			id: depart._id,
-			label: depart.name,
-			children: []
-		}
-	},
-
 	_initMaps: function(){
 		var minZoomLevel = 13;
 		var mapOptions = {
 			center: {
-	lat: 25.048644, 
-	lng: 121.533715
-	},
-	zoom: minZoomLevel
+				lat: 25.048644, 
+				lng: 121.533715
+			},
+			zoom: minZoomLevel
 		};
 
-_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
-console.log(_mainMap);
+		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-//only for call fromLatLngToContainerPixel, ugly indeed
-_overlay = new google.maps.OverlayView();
-_overlay.draw = function() {};
-_overlay.setMap(_mainMap);
+		//only for call fromLatLngToContainerPixel, ugly indeed
+		_overlay = new google.maps.OverlayView();
+		_overlay.draw = function() {};
+		_overlay.setMap(_mainMap);
 
-var eagleRectangle = new google.maps.Rectangle({
-	strokeColor: '#FF0000',
-	strokeOpacity: 1,
-	strokeWeight: 2,
-	bounds: _mainMap.getBounds()
-	});
+		var eagleRectangle = new google.maps.Rectangle({
+			strokeColor: '#FF0000',
+			strokeOpacity: 1,
+			strokeWeight: 2,
+			bounds: _mainMap.getBounds()
+		});
 
-_mainMap.addListener("center_changed", function(e) {
+		_mainMap.addListener("center_changed", function(e) {
 			//_eagleMap.setCenter(_mainMap.getCenter()); 
 			this._checkBounds();
 			if(this.state.disasterMarker != null){
@@ -33128,7 +33283,7 @@ _mainMap.addListener("center_changed", function(e) {
 			eagleRectangle.setBounds(_mainMap.getBounds());
 		}.bind(this));
 
-// Limit the zoom level
+		// Limit the zoom level
 		_mainMap.addListener("zoom_changed", function(e){
 			if (_mainMap.getZoom() < minZoomLevel) _mainMap.setZoom(minZoomLevel);
 		});
@@ -33179,6 +33334,7 @@ _mainMap.addListener("center_changed", function(e) {
 			optimized:false,
 		 	icon: {
 		 		url: "./images/Fire_gif_50.gif",
+		 		zIndex: 1,
 		 		size: new google.maps.Size(50, 50)
 		 	}
 		});
@@ -33187,41 +33343,41 @@ _mainMap.addListener("center_changed", function(e) {
 		this.setState({
 			situation:{
 				step: "災害應變階段",
-				description: "現在溫刀火燒厝，請依指示進行處理"
+				description: "目前有火災發生，請依指示進行處理"
 			},
 			disasterMarker: marker 
 		});
 
-_mainMap.panTo(marker.position);
-_mainMap.setZoom(18);
+		_mainMap.panTo(marker.position);
+		_mainMap.setZoom(18);
 
-//add a spin and a label on _eagleMap
-var spin = new MarkerWithLabel({
-	position: randomCoordinate,
-	icon: {
-	path: google.maps.SymbolPath.CIRCLE,
-	scale: 0, //tamaño 0
-	},
-	map: _eagleMap,
-	draggable: false,
-	labelAnchor: new google.maps.Point(25, 25),
-	labelClass: "spinner",
-	});
-	
-	var label = new MarkerWithLabel({
-	position: randomCoordinate,
-	icon: {
-	path: google.maps.SymbolPath.CIRCLE,
-	strokeColor: 'red',
-	fillColor : 'red',
-	fillOpacity: 1,
-	scale: 3, //tamaño 0
-	},
-	map: _eagleMap,
-	draggable: false,
-	});
-	google.maps.event.trigger(_mainMap, "center_changed");
-this._onDisasterHappen();
+		//add a spin and a label on _eagleMap
+		var spin = new MarkerWithLabel({
+				position: randomCoordinate,
+				icon: {
+				path: google.maps.SymbolPath.CIRCLE,
+				scale: 0, //tamaño 0
+			},
+			map: _eagleMap,
+			draggable: false,
+			labelAnchor: new google.maps.Point(25, 25),
+			labelClass: "spinner",
+		});
+
+		var label = new MarkerWithLabel({
+			position: randomCoordinate,
+			icon: {
+				path: google.maps.SymbolPath.CIRCLE,
+				strokeColor: 'red',
+				fillColor : 'red',
+				fillOpacity: 1,
+				scale: 3, //tamaño 0
+			},
+			map: _eagleMap,
+			draggable: false,
+		});
+		google.maps.event.trigger(_mainMap, "center_changed");
+		this._onDisasterHappen();
 	},
 
 	_onDisasterHappen: function(){
@@ -33230,39 +33386,59 @@ this._onDisasterHappen();
 
 	_getDurationTime: function(current, delay){
 		var depart = this.state.departs[current];
+		// if(depart.name.indexOf('分隊') == -1 ) {
+		// 	current++;
+		// 	if(current < this.state.departs.length){
+		// 		this._getDurationTime(current, 100);
+		// 	}
+		// 	departsWithDuration.push(depart);
+		// 	return;
+		// }
+		// console.log(depart.name);
 		var directionsService = new google.maps.DirectionsService;
 		directionsService.route({
 			origin: depart.address,
 			destination: this.state.disasterMarker.getPosition(),
 			optimizeWaypoints: true,
 			travelMode: google.maps.TravelMode.DRIVING
-	}, function(response, status) {
-		if(status == google.maps.GeocoderStatus.OK){
-			var duration = response.routes[0].legs[0].duration.text;
-			depart.name = depart.name + " (" + duration + ")";
-			departsWithDuration.push(depart);
-			current++
-			if(current < this.state.departs.length){
-					this._getDurationTime(current, 100);
-				}else if(current == this.state.departs.length){
-					this.setState({
-					departs: departsWithDuration,
-					treeData: this._formatDeparts(departsWithDuration)
+		}, function(response, status) {
+			if(status == google.maps.GeocoderStatus.OK){
+				var duration = response.routes[0].legs[0].duration.text;
+				var path = [];
+				response.routes[0].overview_path.forEach(function(element){
+					path.push({
+						lat: element.lat(),
+						lng: element.lng()
+					});
 				});
-				}
-		}else{
-			if(status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
-				setTimeout(function(){this._getDurationTime(current)}.bind(this), delay++);
-			}else{
+				depart.name = depart.name + " (" + duration + ")";
+				depart.path = path;
 				departsWithDuration.push(depart);
+				current++;
+				if(current < this.state.departs.length){
+						this._getDurationTime(current, 100);
+					}else if(current == this.state.departs.length){
+						this.setState({
+						departs: departsWithDuration,
+						treeData: warGameUtils.departsToTreeFormat(departsWithDuration)
+					});
+					}
+			}else{
+				if(status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
+					setTimeout(function(){this._getDurationTime(current)}.bind(this), delay++);
+				}else{
+					departsWithDuration.push(depart);
+				}
 			}
-		}
-		// next();
-	}.bind(this));
+			// next();
+		}.bind(this));
 	},
 
+	/**
+	 *	when user select a tree data, will update 'selectDepart' state
+	 *	當使用者選擇tree data, 會更新 select depart這個state
+	 **/
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-
 		this.setState({
 			selectDepart: this._getSelectDepart(this.state.treeData, lineage.slice())
 		});
@@ -33274,6 +33450,60 @@ this._onDisasterHappen();
 		
 		prevLineage = lineage.slice();
 		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+	},
+
+	_onSendResource: function(resource){
+		var depart = this.state.selectDepart;
+		var pathShadow = new google.maps.Polyline({
+		    path: depart.path,
+		    strokeColor: 'black',
+		    strokeOpacity: 0.2,
+		    strokeWeight: 8,
+		    map: _mainMap
+		});
+		var path = new google.maps.Polyline({
+		    path: depart.path,
+		    geodesic: true,
+		    strokeColor: '#FF0000',
+		    strokeOpacity: 1.0,
+		    strokeWeight: 5,
+		    map:_mainMap
+		});
+		var moveMarker = new SlidingMarker({
+			map: _mainMap,
+			draggable: false,
+			position: path.getPath().getArray()[0],
+			optimized:false,
+		 	icon: {
+		 		url: "./images/resourceIcons/消防車.png",
+		 		scaledSize: new google.maps.Size(32, 32)
+		 	},
+		 	duration: 500,
+		 	easing: 'linear',
+		 	zIndex: 5
+		});
+		//marker.setDuration(1000);
+		//marker.setEasing(linear);
+		var counter = 0;
+		interval = window.setInterval(function() { 
+		  // just pretend you were doing a real calculation of
+		  // new position along the complex path
+		  var nextPos = path.getPath().getArray()[counter];
+		  var icon = moveMarker.getIcon();
+		  var currentPos = moveMarker.getPosition();
+		  if(currentPos.lng() < nextPos.lng()){
+		  	icon.url = "./images/resourceIcons/消防車_right.png"
+		  }else{
+		  	icon.url = "./images/resourceIcons/消防車.png"
+		  }
+		  moveMarker.setPosition(nextPos);
+		  moveMarker.setIcon(icon);
+		  counter++;
+		  if (counter >= path.getPath().getArray().length) {
+		    window.clearInterval(interval);   
+		  }
+		}, 600);
+		console.log(moveMarker);
 	},
 
 	/**
@@ -33302,36 +33532,30 @@ this._onDisasterHappen();
 	 *	update system notify message
 	 *	新增系統提醒文字
 	 **/
-	_systemNotify: function(message){
-		var currentSysMessages = this.state.sysMessages;
-		currentSysMessages.push({text: message});
-		this.setState({
-			sysMessages: currentSysMessages
-		});
-	},
+	// _systemNotify: function(message){
+	// 	var currentSysMessages = this.state.sysMessages;
+	// 	currentSysMessages.push({text: message});
+	// 	this.setState({
+	// 		sysMessages: currentSysMessages
+	// 	});
+	// },
 
 	_getRandomArbitrary: function(min, max) {
 		return Math.random() * (max - min) + min;
 	},
 
-	_editSendCount: function(resName, value){
-		//目前選到的depart
-		var selectDepart = this.state.selectDepart;
-		selectDepart.Resource.forEach((resource, id) => {
-			if(resource.name == resName){
-				//更新deaprt 的 dispatched
-				resource.dispatched = value;
-			}
-		});
-	
+	/**
+	 *	update departs array, and recalculator total dispatched resource
+	 *	更新部門資訊, 並且更新總派出資源
+	 */
+	_updateDeparts: function(editedDepart){
 		//目前選到的 存在於陣列的哪一個index
-		var modifyObjIndex = this._getDepartIndex(selectDepart, this.state.departs);
+		var modifyObjIndex = this._getDepartIndex(editedDepart, this.state.departs);
 		var ary = this.state.departs;
-		ary[modifyObjIndex] = selectDepart;
+		ary[modifyObjIndex] = editedDepart;
 		//更新 depart 陣列 跟 slelectDepart 
 		this.setState({
-			departs: ary,
-			selectDepart: selectDepart,
+			departs: ary
 		});
 
 		//更新總派出資源
@@ -33365,7 +33589,7 @@ this._onDisasterHappen();
 					React.createElement("div", {className: "row custom-content"}, 
 						React.createElement("div", {id: "departList", className: "col-md-2"}, 
 							React.createElement("div", null, 
-								React.createElement("input", {type: "button", className: "btn-success", value: "確認派送"})
+								React.createElement("label", null, "單位名稱(預估到達現場時間)")
 							), 
 							React.createElement(TreeMenu, {
 								onTreeNodeCheckChange: this._handleDynamicTreeNodePropChange.bind(this, "checked"), 
@@ -33375,7 +33599,6 @@ this._onDisasterHappen();
 								data: this.state.treeData}
 							)
 						), 
-					
 						React.createElement("div", {id: "wrapper", className: "col-md-10"}, 
 							React.createElement("div", {id: "map", className: "map"}, 
 								"map"
@@ -33385,51 +33608,33 @@ this._onDisasterHappen();
 									completed: this.state.progressRate, 
 									color: "red"}
 								)
-							), 
-							React.createElement(SystemMessage, {sysMessages: this.state.sysMessages}	)
+							)
+							
 						)
 					), 
 					React.createElement("footer", {className: "footer"}, 
 						React.createElement("div", {className: "container-fluid"}, 
 							React.createElement("div", {className: "row"}, 
 								React.createElement("div", {id: "eagleMap", className: "col-md-2 eagle-map"}), 
-								React.createElement("div", {className: "col-md-9"}, 
-									React.createElement("div", {className: "row"}, 
-										React.createElement("div", {className: "col-md-1"}, 
-											React.createElement("div", {className: "row"}, 
-												React.createElement("div", {className: "footer-initial border-bottom"}, "預計派出資源"), 
-												React.createElement("div", {className: "footer-initial border-bottom"}, "各分隊資源")
-											)
-										), 
-										
-											this.state.selectDepart.Resource.map((resource, i) => {
-												return (
-													React.createElement(Resource, {
-														key: i, 
-														totalDispatched: ResourceUtils.getTotalDispatchedByResource(resource), 
-														departMaxResource: resource.maxAvailable, 
-														resourceName: resource.name, 
-														dispatched: resource.dispatched, 
-														edit: this._editSendCount}
-													)
-												);
-											})
-										
+								React.createElement("div", {className: "col-md-10"}, 
+									React.createElement(Resource, {
+										selectDepart: this.state.selectDepart, 
+										updateDeparts: this._updateDeparts, 
+										sendResource: this._onSendResource}
 									)
-								), 
-								React.createElement("div", {className: "col-md-1"})
+								)
 							)
 						)
 					)
 				), 
 				React.createElement(Chatroom, {
-					self: this.state.user, 
-					systemNotify: this._systemNotify}
-				)
+						self: this.state.user}
+					)
 			)
 		);
 	}
 });
 
 module.exports = Top;
-},{"./Chatroom/":250,"./Progressbar.jsx":257,"./Resource/":260,"./Situation/SituationApp.jsx":261,"./SysMessage/":262,"markerwithlabel":112,"react":249,"react-tree-menu":115}]},{},[265]);
+
+},{"./Chatroom/":250,"./Progressbar.jsx":257,"./Resource/":258,"./Situation/SituationApp.jsx":262,"./Utils.js":263,"markerwithlabel":112,"react":249,"react-tree-menu":115}]},{},[264]);

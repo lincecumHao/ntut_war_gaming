@@ -32,48 +32,6 @@ server.on('listening', onListening);
 var io = require('socket.io')(server);
 io.on("connection", ChatRoomRoutes);
 
-// io.on('connection', function(socket){
-//   console.log("io connection");
-
-//   //user login and get current user
-//   socket.on("userLogin", function(user){
-//     console.log("on userLogin");
-//     _loginUser = user;
-
-//     socket.emit("currentUsers", _loginUsers)
-//     _loginUsers.push(user);
-//     socket.broadcast.emit('user:join', user);
-//   });
-
-//   socket.on('disconnect', function(){
-//     console.log(_loginUser);
-//     //socket.broadcast.emit('user:join', user);
-//   });
-
-//   //user login
-//   // socket.emit('init', session.user);
-
-
-
-//   // socket.on('send:message', function(msg){
-//   //   io.emit('send:message', msg);
-//   // });
-
-//   // socket.on('init', function(msg){
-//   //   io.emit('init', msg);
-//   // });
-
-//   // socket.on('user:join', function(msg){
-//   //   io.emit('user:join', msg);
-//   // });
-
-//   // socket.on('send:message', function(msg){
-//   //   io.emit('user:left', msg);
-//   // });
-
-// });
-
-
 /**
  * Normalize a port into a number, string, or false.
  */

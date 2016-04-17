@@ -1,4 +1,7 @@
 var React = require("react");
+var warGameUtils = require('./Utils.js');
+
+//Siutaion
 var SituationApp = require("./Situation/SituationApp.jsx");
 
 //Chatroom 
@@ -9,7 +12,7 @@ var TreeMenu = require('react-tree-menu').TreeMenu;
 var TreeMenuUtils = require('react-tree-menu').Utils;
 
 //SysMsg
-var SystemMessage = require("./SysMessage/").SystemMessage;
+//var SystemMessage = require("./SysMessage/").SystemMessage;
 
 //ProgressBar
 var ProgressBar = require("./Progressbar.jsx");
@@ -76,7 +79,7 @@ var Top = React.createClass({
 			this.setState({
 				user: res.user,
 				departs: departs,
-				treeData: this._formatDeparts(departs),
+				treeData: warGameUtils.departsToTreeFormat(departs),
 			});
 		}.bind(this));
 	},
@@ -86,76 +89,31 @@ var Top = React.createClass({
 		this._initMaps();
 	},
 
-	_formatDeparts: function(departs){
-		var formatedAry = [];
-		formatedAry.push(this._toTreeFormat(departs[0]));
-		var maxLevel = this._getMaxDepartLevel(departs);
-		for(var i = 1; i < departs.length; i++){
-			formatedAry = this._add2Parent(departs[i], formatedAry);
-		}
-		return formatedAry;
-	},
-
-	_add2Parent: function(depart, array){
-		for(var i = 0; i < array.length; i++){
-			var parent = array[i];
-			//avoid parent name has duration time.
-			var parentName = parent.label.split(" ")[0];
-			if(depart.parent == parentName){
-				array[i].children.push(this._toTreeFormat(depart));
-				return array;
-			}else if(parent.children.length > 0){
-				this._add2Parent(depart, array[i].children);
-			}
-		}
-		return array;
-	},
-
-	_getMaxDepartLevel: function(departs){
-		var mxLevel = 0;
-		for(var i = 0; i < departs.length; i++){
-			mxLevel = (departs[i].level > mxLevel ? departs[i].level : mxLevel);
-		}
-		return mxLevel
-	},
-
-	_toTreeFormat: function(depart) {
-		return{
-			depart: depart,
-			checkbox : (depart.level > 0 ? true : false), 
-			isRadio: true,
-			id: depart._id,
-			label: depart.name,
-			children: []
-		}
-	},
-
 	_initMaps: function(){
 		var minZoomLevel = 13;
 		var mapOptions = {
 			center: {
-	lat: 25.048644, 
-	lng: 121.533715
-	},
-	zoom: minZoomLevel
+				lat: 25.048644, 
+				lng: 121.533715
+			},
+			zoom: minZoomLevel
 		};
 
-_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
-console.log(_mainMap);
+		_mainMap = new google.maps.Map(document.getElementById('map'), mapOptions);
 
-//only for call fromLatLngToContainerPixel, ugly indeed
-_overlay = new google.maps.OverlayView();
-_overlay.draw = function() {};
-_overlay.setMap(_mainMap);
+		//only for call fromLatLngToContainerPixel, ugly indeed
+		_overlay = new google.maps.OverlayView();
+		_overlay.draw = function() {};
+		_overlay.setMap(_mainMap);
 
-var eagleRectangle = new google.maps.Rectangle({
-	strokeColor: '#FF0000',
-	strokeOpacity: 1,
-	strokeWeight: 2,
-	bounds: _mainMap.getBounds()
-	});
+		var eagleRectangle = new google.maps.Rectangle({
+			strokeColor: '#FF0000',
+			strokeOpacity: 1,
+			strokeWeight: 2,
+			bounds: _mainMap.getBounds()
+		});
 
-_mainMap.addListener("center_changed", function(e) {
+		_mainMap.addListener("center_changed", function(e) {
 			//_eagleMap.setCenter(_mainMap.getCenter()); 
 			this._checkBounds();
 			if(this.state.disasterMarker != null){
@@ -172,7 +130,7 @@ _mainMap.addListener("center_changed", function(e) {
 			eagleRectangle.setBounds(_mainMap.getBounds());
 		}.bind(this));
 
-// Limit the zoom level
+		// Limit the zoom level
 		_mainMap.addListener("zoom_changed", function(e){
 			if (_mainMap.getZoom() < minZoomLevel) _mainMap.setZoom(minZoomLevel);
 		});
@@ -223,6 +181,7 @@ _mainMap.addListener("center_changed", function(e) {
 			optimized:false,
 		 	icon: {
 		 		url: "./images/Fire_gif_50.gif",
+		 		zIndex: 1,
 		 		size: new google.maps.Size(50, 50)
 		 	}
 		});
@@ -231,41 +190,41 @@ _mainMap.addListener("center_changed", function(e) {
 		this.setState({
 			situation:{
 				step: "災害應變階段",
-				description: "現在溫刀火燒厝，請依指示進行處理"
+				description: "目前有火災發生，請依指示進行處理"
 			},
 			disasterMarker: marker 
 		});
 
-_mainMap.panTo(marker.position);
-_mainMap.setZoom(18);
+		_mainMap.panTo(marker.position);
+		_mainMap.setZoom(18);
 
-//add a spin and a label on _eagleMap
-var spin = new MarkerWithLabel({
-	position: randomCoordinate,
-	icon: {
-	path: google.maps.SymbolPath.CIRCLE,
-	scale: 0, //tamaño 0
-	},
-	map: _eagleMap,
-	draggable: false,
-	labelAnchor: new google.maps.Point(25, 25),
-	labelClass: "spinner",
-	});
-	
-	var label = new MarkerWithLabel({
-	position: randomCoordinate,
-	icon: {
-	path: google.maps.SymbolPath.CIRCLE,
-	strokeColor: 'red',
-	fillColor : 'red',
-	fillOpacity: 1,
-	scale: 3, //tamaño 0
-	},
-	map: _eagleMap,
-	draggable: false,
-	});
-	google.maps.event.trigger(_mainMap, "center_changed");
-this._onDisasterHappen();
+		//add a spin and a label on _eagleMap
+		var spin = new MarkerWithLabel({
+				position: randomCoordinate,
+				icon: {
+				path: google.maps.SymbolPath.CIRCLE,
+				scale: 0, //tamaño 0
+			},
+			map: _eagleMap,
+			draggable: false,
+			labelAnchor: new google.maps.Point(25, 25),
+			labelClass: "spinner",
+		});
+
+		var label = new MarkerWithLabel({
+			position: randomCoordinate,
+			icon: {
+				path: google.maps.SymbolPath.CIRCLE,
+				strokeColor: 'red',
+				fillColor : 'red',
+				fillOpacity: 1,
+				scale: 3, //tamaño 0
+			},
+			map: _eagleMap,
+			draggable: false,
+		});
+		google.maps.event.trigger(_mainMap, "center_changed");
+		this._onDisasterHappen();
 	},
 
 	_onDisasterHappen: function(){
@@ -274,39 +233,59 @@ this._onDisasterHappen();
 
 	_getDurationTime: function(current, delay){
 		var depart = this.state.departs[current];
+		// if(depart.name.indexOf('分隊') == -1 ) {
+		// 	current++;
+		// 	if(current < this.state.departs.length){
+		// 		this._getDurationTime(current, 100);
+		// 	}
+		// 	departsWithDuration.push(depart);
+		// 	return;
+		// }
+		// console.log(depart.name);
 		var directionsService = new google.maps.DirectionsService;
 		directionsService.route({
 			origin: depart.address,
 			destination: this.state.disasterMarker.getPosition(),
 			optimizeWaypoints: true,
 			travelMode: google.maps.TravelMode.DRIVING
-	}, function(response, status) {
-		if(status == google.maps.GeocoderStatus.OK){
-			var duration = response.routes[0].legs[0].duration.text;
-			depart.name = depart.name + " (" + duration + ")";
-			departsWithDuration.push(depart);
-			current++
-			if(current < this.state.departs.length){
-					this._getDurationTime(current, 100);
-				}else if(current == this.state.departs.length){
-					this.setState({
-					departs: departsWithDuration,
-					treeData: this._formatDeparts(departsWithDuration)
+		}, function(response, status) {
+			if(status == google.maps.GeocoderStatus.OK){
+				var duration = response.routes[0].legs[0].duration.text;
+				var path = [];
+				response.routes[0].overview_path.forEach(function(element){
+					path.push({
+						lat: element.lat(),
+						lng: element.lng()
+					});
 				});
-				}
-		}else{
-			if(status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
-				setTimeout(function(){this._getDurationTime(current)}.bind(this), delay++);
-			}else{
+				depart.name = depart.name + " (" + duration + ")";
+				depart.path = path;
 				departsWithDuration.push(depart);
+				current++;
+				if(current < this.state.departs.length){
+						this._getDurationTime(current, 100);
+					}else if(current == this.state.departs.length){
+						this.setState({
+						departs: departsWithDuration,
+						treeData: warGameUtils.departsToTreeFormat(departsWithDuration)
+					});
+					}
+			}else{
+				if(status == google.maps.GeocoderStatus.OVER_QUERY_LIMIT){
+					setTimeout(function(){this._getDurationTime(current)}.bind(this), delay++);
+				}else{
+					departsWithDuration.push(depart);
+				}
 			}
-		}
-		// next();
-	}.bind(this));
+			// next();
+		}.bind(this));
 	},
 
+	/**
+	 *	when user select a tree data, will update 'selectDepart' state
+	 *	當使用者選擇tree data, 會更新 select depart這個state
+	 **/
 	_handleDynamicTreeNodePropChange: function (propName, lineage) {
-
 		this.setState({
 			selectDepart: this._getSelectDepart(this.state.treeData, lineage.slice())
 		});
@@ -318,6 +297,60 @@ this._onDisasterHappen();
 		
 		prevLineage = lineage.slice();
 		this.setState(TreeMenuUtils.getNewTreeState(lineage, this.state.treeData, propName));
+	},
+
+	_onSendResource: function(resource){
+		var depart = this.state.selectDepart;
+		var pathShadow = new google.maps.Polyline({
+		    path: depart.path,
+		    strokeColor: 'black',
+		    strokeOpacity: 0.2,
+		    strokeWeight: 8,
+		    map: _mainMap
+		});
+		var path = new google.maps.Polyline({
+		    path: depart.path,
+		    geodesic: true,
+		    strokeColor: '#FF0000',
+		    strokeOpacity: 1.0,
+		    strokeWeight: 5,
+		    map:_mainMap
+		});
+		var moveMarker = new SlidingMarker({
+			map: _mainMap,
+			draggable: false,
+			position: path.getPath().getArray()[0],
+			optimized:false,
+		 	icon: {
+		 		url: "./images/resourceIcons/消防車.png",
+		 		scaledSize: new google.maps.Size(32, 32)
+		 	},
+		 	duration: 500,
+		 	easing: 'linear',
+		 	zIndex: 5
+		});
+		//marker.setDuration(1000);
+		//marker.setEasing(linear);
+		var counter = 0;
+		interval = window.setInterval(function() { 
+		  // just pretend you were doing a real calculation of
+		  // new position along the complex path
+		  var nextPos = path.getPath().getArray()[counter];
+		  var icon = moveMarker.getIcon();
+		  var currentPos = moveMarker.getPosition();
+		  if(currentPos.lng() < nextPos.lng()){
+		  	icon.url = "./images/resourceIcons/消防車_right.png"
+		  }else{
+		  	icon.url = "./images/resourceIcons/消防車.png"
+		  }
+		  moveMarker.setPosition(nextPos);
+		  moveMarker.setIcon(icon);
+		  counter++;
+		  if (counter >= path.getPath().getArray().length) {
+		    window.clearInterval(interval);   
+		  }
+		}, 600);
+		console.log(moveMarker);
 	},
 
 	/**
@@ -346,36 +379,30 @@ this._onDisasterHappen();
 	 *	update system notify message
 	 *	新增系統提醒文字
 	 **/
-	_systemNotify: function(message){
-		var currentSysMessages = this.state.sysMessages;
-		currentSysMessages.push({text: message});
-		this.setState({
-			sysMessages: currentSysMessages
-		});
-	},
+	// _systemNotify: function(message){
+	// 	var currentSysMessages = this.state.sysMessages;
+	// 	currentSysMessages.push({text: message});
+	// 	this.setState({
+	// 		sysMessages: currentSysMessages
+	// 	});
+	// },
 
 	_getRandomArbitrary: function(min, max) {
 		return Math.random() * (max - min) + min;
 	},
 
-	_editSendCount: function(resName, value){
-		//目前選到的depart
-		var selectDepart = this.state.selectDepart;
-		selectDepart.Resource.forEach((resource, id) => {
-			if(resource.name == resName){
-				//更新deaprt 的 dispatched
-				resource.dispatched = value;
-			}
-		});
-	
+	/**
+	 *	update departs array, and recalculator total dispatched resource
+	 *	更新部門資訊, 並且更新總派出資源
+	 */
+	_updateDeparts: function(editedDepart){
 		//目前選到的 存在於陣列的哪一個index
-		var modifyObjIndex = this._getDepartIndex(selectDepart, this.state.departs);
+		var modifyObjIndex = this._getDepartIndex(editedDepart, this.state.departs);
 		var ary = this.state.departs;
-		ary[modifyObjIndex] = selectDepart;
+		ary[modifyObjIndex] = editedDepart;
 		//更新 depart 陣列 跟 slelectDepart 
 		this.setState({
-			departs: ary,
-			selectDepart: selectDepart,
+			departs: ary
 		});
 
 		//更新總派出資源
@@ -409,7 +436,7 @@ this._onDisasterHappen();
 					<div className="row custom-content">
 						<div id="departList" className="col-md-2">
 							<div>
-								<input type="button" className="btn-success" value="確認派送" />
+								<label>單位名稱(預估到達現場時間)</label>
 							</div>
 							<TreeMenu
 								onTreeNodeCheckChange={this._handleDynamicTreeNodePropChange.bind(this, "checked")} 
@@ -419,7 +446,6 @@ this._onDisasterHappen();
 								data={this.state.treeData} 
 							/>
 						</div>
-					
 						<div id="wrapper" className="col-md-10">
 							<div id="map" className="map">
 								map
@@ -430,46 +456,27 @@ this._onDisasterHappen();
 									color={"red"}
 								/>
 							</div>
-							<SystemMessage sysMessages={this.state.sysMessages}	/>
+							
 						</div>
 					</div>
 					<footer className="footer">
 						<div className="container-fluid">
 							<div className="row">
 								<div id="eagleMap" className="col-md-2 eagle-map"></div>
-								<div className="col-md-9">
-									<div className="row">
-										<div className="col-md-1">
-											<div className="row">
-												<div className="footer-initial border-bottom">預計派出資源</div>
-												<div className="footer-initial border-bottom">各分隊資源</div>
-											</div>
-										</div>
-										{
-											this.state.selectDepart.Resource.map((resource, i) => {
-												return (
-													<Resource 
-														key={i}
-														totalDispatched = {ResourceUtils.getTotalDispatchedByResource(resource)}
-														departMaxResource = {resource.maxAvailable}
-														resourceName = {resource.name}
-														dispatched = {resource.dispatched}
-														edit = {this._editSendCount}
-													/>
-												);
-											})
-										}
-									</div>
+								<div className="col-md-10">
+									<Resource 
+										selectDepart={this.state.selectDepart}
+										updateDeparts={this._updateDeparts}
+										sendResource={this._onSendResource}
+									/>
 								</div>
-								<div className="col-md-1"></div>
 							</div>
 						</div>
 					</footer>
 				</div>
 				<Chatroom 
-					self={this.state.user}
-					systemNotify={this._systemNotify}
-				/>
+						self={this.state.user}
+					/>
 			</div>
 		);
 	}

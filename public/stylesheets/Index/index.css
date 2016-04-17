@@ -1,13 +1,5 @@
-div.col-md-2 {
-    background: rgba(0, 0, 0, 0.3);
-}
-
-.messages {
-    background: beige;
-}
-
 .resInput {
-    text-align: right
+    text-align: right;
 }
 
 .nav-tabs li a {
@@ -75,13 +67,17 @@ div.col-md-2 {
     left: 0;
 }
 
-.footer div {
+.footer .container-fluid {
     height: inherit;
-    text-align: center
+    text-align: center;
 }
 
-.footer .footer-initial {
-    height: initial;
+.footer .row {
+    height: inherit;
+}
+
+.footer .col-md-9 {
+    height: inherit;
 }
 
 .footer .border-bottom {
@@ -100,9 +96,11 @@ div.col-md-2 {
 #departList {
     padding: 0 0 0 0;
     overflow-x: auto;
+    background-color: gainsboro;
 }
 
 .eagle-map {
+    height: inherit;
     border: 3px solid red;
 }
 
@@ -124,6 +122,15 @@ div.col-md-2 {
     Chat message app
 */
 
+.message {
+    text-align: left;
+}
+
+.sysMessage {
+    text-align: center;
+    font-weight: bold;
+}
+
 .map {
     z-index: 1;
     width: 100%;
@@ -137,25 +144,37 @@ div.col-md-2 {
 .chat .login-user {
     height: 30%;
     padding: 5px 5px 5px 5px;
-    border: 3px solid blue;
     display: block;
-    border-radius: 10px;
     padding-top: 0;
 }
 
 .chat .message-list {
-    height: 64%;
-    padding: 5px 5px 5px 5px;
-    border: 3px solid red;
-    display: block;
-    border-radius: 10px;
     overflow-y: auto;
+    padding: 5px 5px 5px 5px;
+    display: block;
     word-break: break-word;
 }
 
 .chat .send-message {
-    height: 6%;
-    background: blue;
+    height: 35px;
+}
+
+.row .send-message form {
+    display: inline-flex;
+    position: fixed;
+    bottom: 0px;
+}
+
+.chat h3 {
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.chatroom-subject {
+    display: block;
+    background: gainsboro;
+    border-radius: 5px;
+    margin-bottom: 10px;
 }
 
 .same-height {
@@ -165,18 +184,6 @@ div.col-md-2 {
 #wrapper {
     position: relative;
     padding: 0 0 0 0;
-}
-
-#system_message {
-    position: absolute;
-    top: 75%;
-    left: 80%;
-    z-index: 99;
-    width: 20%;
-    height: 25%;
-    word-break: break-word;
-    background: gray;
-    overflow-y: scroll;
 }
 
 .over_map_processbar {
@@ -203,4 +210,45 @@ input[type=number]::-webkit-outer-spin-button {
 
 input[type=number] {
     width: 80%;
+}
+
+
+/**
+ * disable google maps trademark
+ **/
+
+a[href^="http://maps.google.com/maps"] {
+    display: none !important;
+}
+
+a[href^="https://maps.google.com/maps"] {
+    display: none !important;
+}
+
+.gmnoprint a,
+.gmnoprint span,
+.gm-style-cc {
+    display: none;
+}
+
+.gmnoprint div {
+    background: none !important;
+}
+
+
+/**
+ * Resource
+ **/
+
+.send-res-confirm {
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.res-list {
+    display: flex;
+}
+
+.res-item {
+    display: inline-block;
 }

@@ -19,6 +19,7 @@ var ChatForm = React.createClass({
 
 	handelSubmit: function(e){
 		e.preventDefault();
+		if(this.state.text == "") return;
 		var message = {
 			from : this.props.from,
           	text : this.state.text,
@@ -37,14 +38,14 @@ var ChatForm = React.createClass({
 	render: function() {
 		return (
 			<div id="sendMsgFormHolder" className="row send-message">
-				<form onSubmit={this.handelSubmit}>
-					<div className="input-group same-height">
+				<div className="input-group same-height">
+					<form onSubmit={this.handelSubmit}>
 						<input type="text" className="form-control" placeholder={this.props.chatTo ? "對" + this.props.chatTo + "說" : "訊息" } onChange={this.handelMessage} value={this.state.text}/>
 				      	<span className="input-group-btn">
-				        	<button type="submit" className="btn btn-success same-height" >送出</button>
+				        	<button type="button" className="btn btn-success same-height" onClick={this.handelSubmit}>送出</button>
 				        </span>
-					</div>
-				</form>
+			        </form>
+				</div>
 			</div>
 		);
 	}
